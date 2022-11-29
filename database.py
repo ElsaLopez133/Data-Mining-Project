@@ -103,10 +103,18 @@ with open('data/queries.csv', 'w', encoding='UTF8', newline = '') as f:
 
 print(df_fake_queries[:5])
 
-utility_matrix = pd.DataFrame
-for i in range(df_fake_user):
+df_user_queries = pd.DataFrame(columns = ['query_id', 'user_id', 'rank'])
+for i in range(len(df_fake_user)):
     m = random.randint(1,200)
-    df_user_queries = df_fake_queries.sample(n = m)['query_id']
-    df_user_queries['rank'] = np.random.randint(0,100,df_user_queries.shape[0])
+    queries = np.random.randint(0,len(df_fake_queries),m)
+    user = [df_fake_user.iloc[i][0]]*m
+    rank = np.random.randint(0,100,m)
+    
+    df_temp = pd.DataFrame(list(zip(queries, user, rank)), columns = ['query_id', 'user_id', 'rank'])
+    df_user_queries = pd.concat([df_user_queries, df_temp], ignore_index=True)
+    df_user_queries.reset_index()
+
+print(df_user_queries)
+df_user_queries.to_csv('data/user_queries.csv', header = True, sep = ',')
     
     
