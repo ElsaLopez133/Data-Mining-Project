@@ -19,7 +19,7 @@ colors_provider = DynamicProvider(
      elements=["orange", "yellow", "blue", "red", "green", "black", "pink", "white"],
 )
 
-data = pd.read_csv("it.csv", sep = "," )
+data = pd.read_csv("data/it.csv", sep = "," )
 city_provider = DynamicProvider(
      provider_name="city",
      elements= data['city'][:100].tolist(),
@@ -30,7 +30,7 @@ region_provider = DynamicProvider(
      elements= data['admin_name'].tolist(),
 )
 
-data1 = pd.read_csv("animal-names.csv", sep = "," )
+data1 = pd.read_csv("data/animal_names.csv", sep = "," )
 animals_provider = DynamicProvider(
      provider_name="animal",
      elements= data1['name'][:500].tolist(),
@@ -70,7 +70,7 @@ for _ in range(1000):
     fake_data["animal"].append(fake.animal())
 
 df_fake_data = pd.DataFrame(fake_data)
-df_fake_data.to_csv('database.csv', header = True, sep = ',')
+df_fake_data.to_csv('data/database.csv', header = True, sep = ',')
 #print(df_fake_data.nunique())
 n = len(df_fake_data.columns)
 
@@ -79,10 +79,10 @@ for _ in range(100):
     fake_user["user_id"].append(fake.unique.ssn())
     
 df_fake_user = pd.DataFrame(fake_user, columns=['user_id'])
-df_fake_user.to_csv('user.csv', header = True, sep = ',')
+df_fake_user.to_csv('data/user.csv', header = True, sep = ',')
 
 # We create the queries. We can create queries with 1 until n conditions, where n is the number of columns of fake_data
-with open('queries.csv', 'w', encoding='UTF8', newline = '') as f:
+with open('data/queries.csv', 'w', encoding='UTF8', newline = '') as f:
     writer = csv.writer(f)
     columns_names = ['query_id'] 
     columns_names.extend(df_fake_data.columns)
