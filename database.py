@@ -8,6 +8,7 @@ from sqlalchemy import create_engine
 import faker.providers
 from faker.providers import DynamicProvider
 import random
+import re
 
 medical_professions_provider = DynamicProvider(
      provider_name="medical_profession",
@@ -17,6 +18,18 @@ medical_professions_provider = DynamicProvider(
 colors_provider = DynamicProvider(
      provider_name="colors",
      elements=["orange", "yellow", "blue", "red", "green", "black", "pink", "white"],
+)
+
+data2 = pd.read_csv("data/flavors.csv", sep = "," )
+aliment_provider = DynamicProvider(
+     provider_name="aliment",
+     elements=data2['aliment'].tolist(),
+)
+
+data2 = data2.dropna()
+flavor_provider = DynamicProvider(
+     provider_name="flavor",
+     elements=data2['flavor'].tolist(),
 )
 
 data = pd.read_csv("data/it.csv", sep = "," )
@@ -45,6 +58,8 @@ fake.add_provider(colors_provider)
 fake.add_provider(city_provider)
 fake.add_provider(region_provider)
 fake.add_provider(animals_provider)
+fake.add_provider(flavor_provider)
+fake.add_provider(aliment_provider)
 
 # We’ll use fake_data to create our dictionary. defaultdict(list) will create a dictionary that will create key-value pairs 
 # that are not currently stored within the dictionary when accessed. Essentially, you do not need to define any keys within 
@@ -61,17 +76,21 @@ for _ in range(1000):
     fake_data["dob"].append( fake.date_of_birth() )
     fake_data["country"].append( fake.country() )
     fake_data["color"].append(fake.colors())
-    fake_data["currency"].append(fake.currency())
+    fake_data["aliment"].append(fake.aliment())
     fake_data["company"].append(fake.company())
     fake_data["medical"].append(fake.medical_profession())
-    fake_data["user_agent"].append(fake.user_agent())
+    fake_data["flavor"].append(fake.flavor())
     fake_data["city"].append(fake.city())
     fake_data["region"].append(fake.region())
     fake_data["animal"].append(fake.animal())
+    fake_data["user_agent"].append(fake.user_agent())
+    fake_data["currency"].append(fake.currency())
 
 df_fake_data = pd.DataFrame(fake_data)
+
 df_fake_data.to_csv('data/database.csv', header = True, sep = ',')
-#print(df_fake_data.nunique())
+
+print(df_fake_data[:10])
 n = len(df_fake_data.columns)
 
 # We create the users with their id
@@ -86,7 +105,7 @@ with open('data/queries.csv', 'w', encoding='UTF8', newline = '') as f:
     writer = csv.writer(f)
     columns_names = ['query_id'] 
     columns_names.extend(df_fake_data.columns)
-    df_fake_queries = pd.DataFrame(index = range(20000), columns = columns_names)
+    df_fake_queries = pd.DataFrame(index = range(2000), columns = columns_names)
 
     for i in range(2000):
         row = [i]
@@ -105,6 +124,7 @@ print(df_fake_queries[:5])
 
 df_user_queries = pd.DataFrame(columns = ['query_id', 'user_id', 'rank'])
 for i in range(len(df_fake_user)):
+    # We choose from 1 to 200 quereis for each user
     m = random.randint(1,200)
     queries = np.random.randint(0,len(df_fake_queries),m)
     user = [df_fake_user.iloc[i][0]]*m
@@ -117,4 +137,5 @@ for i in range(len(df_fake_user)):
 print(df_user_queries)
 df_user_queries.to_csv('data/user_queries.csv', header = True, sep = ',')
     
+ # We remove teh double quotes from the csv files
     
