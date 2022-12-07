@@ -192,8 +192,10 @@ for i in range(10):
     condition = condition[:-4]
     print(condition)
             
-    data.query(str(condition))
-    print(data.query(str(condition)))
+    matching = data.query(str(condition))
+    print(matching.index)
+    
+    
     
 
 
