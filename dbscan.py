@@ -21,16 +21,16 @@ n = len(data.columns)
 print("Dataset shape:", data.shape)
 
 # Normalize data
-data = pd.DataFrame(StandardScaler().fit_transform(data), columns = column_names)
+data_normal = pd.DataFrame(StandardScaler().fit_transform(data), columns = column_names)
 
 ###################################################################
 ## TSNE
 ###################################################################
 
-#print('\n----------------TSNE----------------\n')
-#n_components = 2
-#tsne = TSNE(n_components)
-#data = tsne.fit_transform(data)
+print('\n----------------TSNE----------------\n')
+n_components = 2
+tsne = TSNE(n_components)
+data = tsne.fit_transform(data_normal)
 
 
 ###################################################################
@@ -55,7 +55,7 @@ plt.savefig('./data_house/figure_pre_dbsacn') # showing the plot
 ###################################################################
 # clusters
 print('\n-----------------DBSCAN--------------\n')
-dbscan = DBSCAN(eps = 0.8, min_samples = 2 * n).fit(data) 
+dbscan = DBSCAN(eps = 2, min_samples = 6).fit(data) 
 core_samples_mask = np.zeros_like(dbscan.labels_, dtype=bool)
 core_samples_mask[dbscan.core_sample_indices_] = True
 labels = dbscan.labels_ # getting the labels
@@ -107,16 +107,25 @@ if data.shape[1] != 2:
     ###################################################################
 
     pca = PCA(n_components=2)
-    principalComponents = pca.fit_transform(data)
+    principalComponents = pca.fit_transform(data_normal)
     principalDf = pd.DataFrame(data = principalComponents
                 , columns = ['principal component 1', 'principal component 2'])
     principalDf['color'] = kmeans.labels_
+    
+    
 
-    plt.figure(figsize=(10,8))
+    plt.figure(figsize=(15,8))
+    plt.subplot(1,2,1)
     plt.scatter(principalComponents[:,0], principalComponents[:,1], c=kmeans.labels_, cmap= "plasma") 
     plt.xlabel('principal component 1')
     plt.ylabel('principal component 2')
-    plt.title('pca')
+    plt.title('pca (kmeans)')
+    
+    plt.subplot(1,2,2)
+    plt.scatter(principalComponents[:,0], principalComponents[:,1], c=labels, cmap= "plasma") 
+    plt.xlabel('principal component 1')
+    plt.ylabel('principal component 2')
+    plt.title('pca (DBSCAN)')
     plt.savefig('./data_house/figure_dbsacn_pca') # showing the plot
 
 
@@ -126,20 +135,37 @@ if data.shape[1] != 2:
 
     n_components = 2
     tsne = TSNE(n_components)
-    tsne_result = tsne.fit_transform(data)
+    tsne_result = tsne.fit_transform(data_normal)
     tsne_result.shape
     
-    plt.figure(figsize=(10,8))
+    plt.figure(figsize=(15,8))
+    plt.subplot(1,2,1)
     plt.scatter(tsne_result[:,0], tsne_result[:,1], c=kmeans.labels_, cmap= "plasma") 
     plt.xlabel('principal component 1')
     plt.ylabel('principal component 2')
-    plt.title('tsne')
+    plt.title('tsne (kmeans)')
+    
+    plt.subplot(1,2,2)
+    plt.scatter(tsne_result[:,0], tsne_result[:,1], c=labels, cmap= "plasma") 
+    plt.xlabel('principal component 1')
+    plt.ylabel('principal component 2')
+    plt.title('tsne (DBSCAN)')
+    
     plt.savefig('./data_house/figure_dbsacn_tsne')
 else:
-    plt.figure(figsize=(10,8))
+    plt.figure(figsize=(15,8))
+    plt.subplot(1,2,1)
     plt.scatter(data[:,0], data[:,1], c=kmeans.labels_, cmap= "plasma") 
     plt.xlabel('principal component 1')
     plt.ylabel('principal component 2')
+    plt.title('kmeans')
+    
+    plt.subplot(1,2,2)
+    plt.scatter(data[:,0], data[:,1], c=labels, cmap= "plasma") 
+    plt.xlabel('principal component 1')
+    plt.ylabel('principal component 2')
+    plt.title('DBSCAN')
+    
     plt.savefig('./data_house/figure_dbsacn') # showing the plot
 
 
