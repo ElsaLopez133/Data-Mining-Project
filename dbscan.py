@@ -24,14 +24,13 @@ print("Dataset shape:", data.shape)
 data_normal = pd.DataFrame(StandardScaler().fit_transform(data), columns = column_names)
 
 ###################################################################
-## TSNE
+## Dimensionality reduction
 ###################################################################
 
-print('\n----------------TSNE----------------\n')
-n_components = 2
-tsne = TSNE(n_components)
-data = tsne.fit_transform(data_normal)
-
+pca = PCA(n_components = 0.70)
+data = pca.fit_transform(data_normal)
+data = pd.DataFrame(data)
+print(data.shape)
 
 ###################################################################
 ## Find parameters of DBSCAN
@@ -168,5 +167,33 @@ else:
     
     plt.savefig('./data_house/figure_dbsacn') # showing the plot
 
+
+###################################################################
+## Assign queries to clusters
+###################################################################
+
+queries =  pd.read_csv("./data_house/queries_to_use.csv", sep = ',', index_col = 0)
+data = pd.read_csv("./data_house/database.csv", sep = ',') 
+
+column_names_queries = queries.columns
+print(column_names_queries)
+# We create an empty dataframe where we are going to store the matching outputs
+matching_outputs = pd.DataFrame()
+
+for i in range(10):
+    print(queries.iloc[i])
+    # We generate the condition
+    condition = ""
+    for j in range(1,n):
+        if np.isnan(queries.iloc[i][j]):
+            continue
+        else:
+            condition = condition + column_names_queries[j] + " == " + str(int(queries.iloc[i][j])) + ' and '
+    condition = condition[:-4]
+    print(condition)
+            
+    data.query(str(condition))
+    print(data.query(str(condition)))
+    
 
 

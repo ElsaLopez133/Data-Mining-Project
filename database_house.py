@@ -65,6 +65,7 @@ with open('data_house/queries.csv', 'w', encoding='UTF8', newline = '') as f:
         writer.writerow(row)
 
 print(df_fake_queries[:5])
+df_fake_queries.to_csv('data_house/queries_to_use.csv', header = True, sep = ',')
 
 df_user_queries = pd.DataFrame(columns = ['query_id', 'user_id', 'rank'])
 for i in range(len(df_fake_user)):
@@ -79,5 +80,5 @@ for i in range(len(df_fake_user)):
     df_user_queries.reset_index()
 
 print(df_user_queries)
-df_user_queries.to_csv('data_house/user_queries.csv', header = True, sep = ',')
+df_user_queries.to_csv('data_house/user_queries.csv', header = True, sep = ',', index=False)
     
