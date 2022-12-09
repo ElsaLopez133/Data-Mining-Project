@@ -10,7 +10,7 @@ import seaborn as sns
 import warnings
 from sklearn.cluster import KMeans
 from kneed import KneeLocator
-
+import collections
 ###################################################################
 ## Read data
 ###################################################################
@@ -179,7 +179,7 @@ data['cluster_id_dbscan'] = labels
 print(data.head())
 
 column_names_queries = queries.columns
-print(column_names_queries)
+#print(column_names_queries)
 
 # We create an empty dataframe where we are going to store the matching outputs
 columns_matching = [str(i) for i in np.unique(kmeans.labels_)]
@@ -209,7 +209,13 @@ for i in range(len(queries)):
     
 maxValueIndex = matching_outputs.idxmax(axis = 1)
 queries['kmeans_label_id'] = maxValueIndex
-print(queries)
+
+
+print("Used clusters: ", np.unique(queries['kmeans_label_id']))
+
+event_counts = collections.Counter(queries['kmeans_label_id'])
+import pprint
+pprint.pprint(event_counts)
     
         
     
