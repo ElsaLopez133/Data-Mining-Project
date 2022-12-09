@@ -67,6 +67,31 @@ with open('data_house/queries.csv', 'w', encoding='UTF8', newline = '') as f:
 print(df_fake_queries[:5])
 df_fake_queries.to_csv('data_house/queries_to_use.csv', header = True, sep = ',')
 
+
+column_names = [i for i in df_fake_queries['query_id']]
+df_user_queries = pd.DataFrame(columns = column_names)
+for i in range(len(df_fake_user)):
+    # We choose from 100 to 1000 quereis for each user
+    m = random.randint(100,1000)
+    queries = np.random.randint(0,len(df_fake_queries),m)
+    
+    row = []
+    for j in range(len(df_fake_queries)):
+        if df_fake_queries['query_id'].iloc[j] in queries:
+            row.append(np.random.randint(0,100,1)[0])
+        else:
+            row.append(np.nan)
+            
+    df_user_queries.loc[len(df_user_queries.index)] = row
+
+
+df_user_queries.insert(0, "user_id", [k for k in df_fake_user['user_id']], True)
+print(df_user_queries)
+df_user_queries.to_csv('data_house/user_queries.csv', header = True, sep = ',', index=False)
+
+
+
+'''
 df_user_queries = pd.DataFrame(columns = ['query_id', 'user_id', 'rank'])
 for i in range(len(df_fake_user)):
     # We choose from 1 to 200 quereis for each user
@@ -82,3 +107,4 @@ for i in range(len(df_fake_user)):
 print(df_user_queries)
 df_user_queries.to_csv('data_house/user_queries.csv', header = True, sep = ',', index=False)
     
+'''

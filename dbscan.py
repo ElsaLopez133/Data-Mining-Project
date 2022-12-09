@@ -54,7 +54,7 @@ plt.savefig('./data_house/figure_pre_dbsacn') # showing the plot
 ###################################################################
 # clusters
 print('\n-----------------DBSCAN--------------\n')
-dbscan = DBSCAN(eps = 2, min_samples = 6).fit(data) 
+dbscan = DBSCAN(eps = 2, min_samples = 10).fit(data) 
 core_samples_mask = np.zeros_like(dbscan.labels_, dtype=bool)
 core_samples_mask[dbscan.core_sample_indices_] = True
 labels = dbscan.labels_ # getting the labels
