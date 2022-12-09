@@ -92,7 +92,7 @@ kmeans = KMeans(init="random", n_clusters=kl.elbow, n_init=10, max_iter=300,rand
 kmeans.fit(data)
 print('labels k-means: ', np.unique(kmeans.labels_))
 n_clusters_kmeans = len(set(kmeans.labels_)) - (1 if -1 in kmeans.labels_ else 0)
-print('n_clusters for DBSCAN: ', n_clusters_kmeans)
+print('n_clusters for kmeans: ', n_clusters_kmeans)
 
 
 ###################################################################
@@ -174,14 +174,19 @@ else:
 
 queries =  pd.read_csv("./data_house/queries_to_use.csv", sep = ',', index_col = 0)
 data = pd.read_csv("./data_house/database.csv", sep = ',') 
+data['cluster_id_kmeans'] = kmeans.labels_
+data['cluster_id_dbscan'] = labels
+print(data.head())
 
 column_names_queries = queries.columns
 print(column_names_queries)
-# We create an empty dataframe where we are going to store the matching outputs
-matching_outputs = pd.DataFrame()
 
-for i in range(10):
-    print(queries.iloc[i])
+# We create an empty dataframe where we are going to store the matching outputs
+columns_matching = [str(i) for i in np.unique(kmeans.labels_)]
+matching_outputs = pd.DataFrame(0, index = range(len(queries)), columns=columns_matching)
+
+for i in range(len(queries)):
+    #print(queries.iloc[i])
     # We generate the condition
     condition = ""
     for j in range(1,n):
@@ -190,10 +195,24 @@ for i in range(10):
         else:
             condition = condition + column_names_queries[j] + " == " + str(int(queries.iloc[i][j])) + ' and '
     condition = condition[:-4]
-    print(condition)
+    #print(condition)
             
     matching = data.query(str(condition))
-    print(matching.index)
+    #print(matching.index)
+    
+    for k in range(len(matching)):
+        label_id = data['cluster_id_kmeans'].iloc[k]
+        #print(label_id)
+        matching_outputs[str(label_id)].iloc[i] += 1
+    #print(matching_outputs)
+    
+    
+maxValueIndex = matching_outputs.idxmax(axis = 1)
+queries['kmeans_label_id'] = maxValueIndex
+print(queries)
+    
+        
+    
     
     
     
