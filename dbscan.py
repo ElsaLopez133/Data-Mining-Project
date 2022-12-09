@@ -54,7 +54,7 @@ plt.savefig('./data_house/figure_pre_dbsacn') # showing the plot
 ###################################################################
 # clusters
 print('\n-----------------DBSCAN--------------\n')
-dbscan = DBSCAN(eps = 2, min_samples = 10).fit(data) 
+dbscan = DBSCAN(eps = 1.75, min_samples = 8).fit(data) 
 core_samples_mask = np.zeros_like(dbscan.labels_, dtype=bool)
 core_samples_mask[dbscan.core_sample_indices_] = True
 labels = dbscan.labels_ # getting the labels
@@ -217,9 +217,20 @@ event_counts = collections.Counter(queries['kmeans_label_id'])
 import pprint
 pprint.pprint(event_counts)
     
-        
-    
-    
+
+###################################################################
+## Fill out utility matrix
+###################################################################
+user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',', index_col = 0)
+
+fill_value = pd.DataFrame({col: user_queries.mean(axis=1) for col in user_queries.columns})
+user_queries.fillna(fill_value.astype(int), inplace=True)
+print(user_queries)
+
+df_fake_user = pd.read_csv("./data_house/user.csv", sep = ',')
+user_queries.insert(0, "user_id", [k for k in df_fake_user['user_id']], True)
+user_queries.to_csv('data_house/user_queries_fill.csv', header = True, sep = ',', index=False)
+
     
     
 
