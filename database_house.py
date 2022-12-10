@@ -20,14 +20,14 @@ for _ in range(1000):
     fake_data['nrooms'].append(random.randint(1,5))
     fake_data['nbedrooms'].append(random.randint(1,3))
     fake_data['nbath'].append(random.randint(1,3))
-    fake_data['sm'].append(random.randint(50, 200))
-    fake_data['garden_sm'].append(random.randint(0,50))
+    fake_data['sm'].append(random.randint(1,40))
+    fake_data['garden_sm'].append(random.randint(1,10))
     fake_data['floors'].append(random.randint(1,3))
-    fake_data['gargae_sm'].append(random.randint(0, 50))
-    fake_data['price'].append(random.randint(10, 1000))
-    fake_data['year'].append(random.randint(1800, 2022))
-    fake_data['windows'].append(random.randint(10, 50))
-    fake_data['dist_city'].append(random.randint(0, 50))
+    fake_data['gargae_sm'].append(random.randint(1, 10))
+    fake_data['price'].append(random.randint(1, 50))
+    fake_data['year'].append(random.randint(1, 30))
+    fake_data['windows'].append(random.randint(1,20))
+    fake_data['dist_city'].append(random.randint(1, 20))
     fake_data['doors'].append(random.randint(1,10))
     
     
@@ -55,7 +55,7 @@ with open('data_house/queries.csv', 'w', encoding='UTF8', newline = '') as f:
         row = [i]
         df_fake_queries['query_id'].iloc[i] = i
         
-        m = random.randint(1,n)
+        m = random.randint(1,4)
         df = df_fake_data.sample(n = m, axis = 'columns').sample()
         
         for j in range(len(df.columns)):
@@ -70,15 +70,18 @@ df_fake_queries.to_csv('data_house/queries_to_use.csv', header = True, sep = ','
 
 column_names = [i for i in df_fake_queries['query_id']]
 df_user_queries = pd.DataFrame(columns = column_names)
+
+values = np.array([[60,100],[1,100],[1,50],[30,80]])
 for i in range(len(df_fake_user)):
-    # We choose from 150 to 1000 quereis for each user
+    index = np.random.randint(0, len(values),1)[0]
+    # We choose from 100 to 1000 quereis for each user
     m = random.randint(500,1000)
     queries = np.random.randint(0,len(df_fake_queries),m)
     
     row = []
     for j in range(len(df_fake_queries)):
         if df_fake_queries['query_id'].iloc[j] in queries:
-            row.append(np.random.randint(0,100,1)[0])
+            row.append(np.random.randint(values[index][0],values[index][1],1)[0])
         else:
             row.append(np.nan)
             

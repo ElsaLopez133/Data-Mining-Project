@@ -204,26 +204,139 @@ for i in range(len(queries)):
         label_id = data['cluster_id_kmeans'].iloc[k]
         #print(label_id)
         matching_outputs[str(label_id)].iloc[i] += 1
-        #matching_outputs.to_csv('data_house/matching_outputs.csv', header = False, sep = ',', index=False)
-        #print(matching_outputs[:10])
     
-    
+
+print(matching_outputs[:10])    
+matching_outputs.to_csv('data_house/matching_outputs.csv', header = False, sep = ',', index=False)
 maxValueIndex = matching_outputs.idxmax(axis = 1)
 queries['kmeans_label_id'] = maxValueIndex
 
 
+print('-------------queries-----------\n')
 print("Used clusters: ", np.unique(queries['kmeans_label_id']))
-
 event_counts = collections.Counter(queries['kmeans_label_id'])
 import pprint
 pprint.pprint(event_counts)
+
+print('-------------database-----------\n')
+print("Database: ", np.unique(data['cluster_id_kmeans']))
+event_counts = collections.Counter(data['cluster_id_kmeans'])
+import pprint
+pprint.pprint(event_counts)
+
+###################################################################
+## Jaccard similarity between queries
+###################################################################
+print('--------------jaccard similarity-----------\n')
+# Create the set for each query
+#print(column_names_queries)
+dict_queries = {}
+for i in range(len(queries)):
+    set_query = []
+    for j in range(12):
+        if np.isnan(queries.iloc[i][j+1]):
+            continue
+        else:
+            for k in range(int(queries.iloc[i][j+1])):
+                set_query.append(column_names_queries[j+1])
+    dict_queries.update( {str(queries['query_id'].iloc[i]) : set_query} )
+
+
+def jaccard_similarity(A, B):
+    
+    #Find intersection
+    nominator = intersection(A,B)
+    #print(nominator)
+    #Find union 
+    denominator = union(A,B)
+    #print(denominator)
+    #Take the ratio of sizes
+    similarity = len(nominator)/len(denominator)
+    
+    
+    #print(similarity)
+    return similarity
+
+def intersection(lst1, lst2):
+    lst3 = []
+    for value in lst1:
+        if ((value in lst2) & (len(lst2) > 0)):
+            lst3.append(str(value))
+            lst2.remove(value)
+    return lst3
+
+def union(lst1, lst2):
+    lst3 = lst1 + lst2 
+    return lst3
+    
+
+user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',', index_col = 0)
+
+for i in range(1): #TODO: Update!
+    dict_cluster = {}
+    user_queries_non_nan = []
+    user_queries_nan = []
+    
+    for t,j in user_queries.iloc[i].items():
+        if (np.isnan(j)):
+            user_queries_nan.append(t)
+        else:
+            user_queries_non_nan.append(t)
+                      
+    #user_queries_non_nan = user_queries.iloc[i].dropna() 
+    #user_queries_nan = user_queries.iloc[i].isnan()
+
+    # Create a dictionary
+    for j in range(len(np.unique(queries['kmeans_label_id']))):
+        dict_cluster.update({str(np.unique(queries['kmeans_label_id'][j][0])) : []})
+    #index_queries = user_queries_non_nan.index
+    for k in range(len(user_queries_non_nan)):
+        dict_cluster[str([queries['kmeans_label_id'].iloc[k]])].append(user_queries_non_nan[k])
+    #print(dict_cluster)
+    
+    #print(dict_queries)
+    for item in user_queries_nan:
+        key = str([queries['kmeans_label_id'].iloc[int(item)]])
+        similarity = []
+        index_top_3 = [0,0,0]
+        value_top_3 =[0,0,0]
+        for query_id in dict_cluster[key]:
+            similarity_value = jaccard_similarity(dict_queries[str(item)], dict_queries[str(query_id)])
+            
+            if similarity_value > min(value_top_3):
+                min_index = value_top_3.index(min(value_top_3))
+                index_top_3[min_index] = int(query_id)
+                value_top_3[min_index] = similarity_value 
+                 
+        if any(index_top_3) != 0:
+        # similarity.append(jaccard_similarity(dict_queries[str(item)], dict_queries[str(query)]))
+            print(value_top_3)
+            print(index_top_3)
+    
+        
+        # Fill the ranking of the current nan query for the current user by averaging the top 3 values
+        if any(index_top_3) != 0:
+            
+            rankings = [user_queries[str(index_top_3[0])].iloc[i], user_queries[str(index_top_3[1])].iloc[i], user_queries[str(index_top_3[2])].loc[i]]
+            print(rankings)
+
+        # Weighted ranking based on similarity score of top 3!
+        
+        # Edge case if some of the top 3 are 0, don't use them!
+
+        # Edge case if all top 3 are 0 average of all queries in a given cluster instead for ranking
+
+        # Return top k queries which were previously nan and now have a high rating
+
+      
     
 
 ###################################################################
 ## Fill out utility matrix
 ###################################################################
-user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',', index_col = 0)
 
+
+'''
 fill_value = pd.DataFrame({col: user_queries.mean(axis=1) for col in user_queries.columns})
 user_queries.fillna(fill_value.astype(int), inplace=True)
 print(user_queries[:10])
@@ -233,6 +346,8 @@ user_queries.insert(0, "user_id", [k for k in df_fake_user['user_id']], True)
 user_queries.to_csv('data_house/user_queries_fill.csv', header = True, sep = ',', index=False)
 
     
+'''
+
     
 
 
