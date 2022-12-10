@@ -274,26 +274,37 @@ user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',', index_co
 
 for i in range(1): #TODO: Update!
     dict_cluster = {}
+    average_cluster = {}
     user_queries_non_nan = []
     user_queries_nan = []
     
+    # We create lists containing the indexes of no ranked queries and ranked queries
     for t,j in user_queries.iloc[i].items():
         if (np.isnan(j)):
             user_queries_nan.append(t)
         else:
             user_queries_non_nan.append(t)
-                      
-    #user_queries_non_nan = user_queries.iloc[i].dropna() 
-    #user_queries_nan = user_queries.iloc[i].isnan()
 
     # Create a dictionary
     for j in range(len(np.unique(queries['kmeans_label_id']))):
         dict_cluster.update({str(np.unique(queries['kmeans_label_id'][j][0])) : []})
-    #index_queries = user_queries_non_nan.index
+        average_cluster.update({str(np.unique(queries['kmeans_label_id'][j][0])) : []})
+        
     for k in range(len(user_queries_non_nan)):
         dict_cluster[str([queries['kmeans_label_id'].iloc[k]])].append(user_queries_non_nan[k])
+            
     #print(dict_cluster)
     
+    # We calculate the average ranking of ranked queries in each cluster
+    for j in range(len(np.unique(queries['kmeans_label_id']))):
+        key = str(np.unique(queries['kmeans_label_id'][j][0]))
+        ranking_temp = []
+        for query_id in dict_cluster[key]:
+            ranking_temp.append(user_queries[str(query_id)].iloc[i])
+    
+        average_cluster[key].append(sum(ranking_temp)/len(ranking_temp))
+    print('average rankings: ',average_cluster)
+         
     #print(dict_queries)
     for item in user_queries_nan:
         key = str([queries['kmeans_label_id'].iloc[int(item)]])
@@ -302,32 +313,42 @@ for i in range(1): #TODO: Update!
         value_top_3 =[0,0,0]
         for query_id in dict_cluster[key]:
             similarity_value = jaccard_similarity(dict_queries[str(item)], dict_queries[str(query_id)])
-            
+            # similarity.append(similarity_value)
             if similarity_value > min(value_top_3):
                 min_index = value_top_3.index(min(value_top_3))
                 index_top_3[min_index] = int(query_id)
                 value_top_3[min_index] = similarity_value 
-                 
-        if any(index_top_3) != 0:
-        # similarity.append(jaccard_similarity(dict_queries[str(item)], dict_queries[str(query)]))
-            print(value_top_3)
-            print(index_top_3)
+     
+        #if any(index_top_3) != 0:
+        #    print(value_top_3)
+        #    print(index_top_3)
     
         
         # Fill the ranking of the current nan query for the current user by averaging the top 3 values
-        if any(index_top_3) != 0:
-            
-            rankings = [user_queries[str(index_top_3[0])].iloc[i], user_queries[str(index_top_3[1])].iloc[i], user_queries[str(index_top_3[2])].loc[i]]
-            print(rankings)
-
-        # Weighted ranking based on similarity score of top 3!
-        
-        # Edge case if some of the top 3 are 0, don't use them!
-
         # Edge case if all top 3 are 0 average of all queries in a given cluster instead for ranking
-
+        if all([val == 0 for val in index_top_3]):
+            #print('we are in case 1\n')
+            user_queries[str(item)].iloc[i] = average_cluster[key][0]
+        
+        # Weighted ranking based on similarity score of top 3!
+        if all([val != 0 for val in index_top_3]):
+            #print('we are in case 2\n')
+            rankings = [int(user_queries[str(index_top_3[j])].iloc[i]) for j in range(len(index_top_3))]
+            user_queries[str(item)].iloc[i] = np.average(rankings, weights = value_top_3)
+                  
+        # Edge case if some of the top 3 are 0, don't use them!
+        if ((any(index_top_3) == 0) & (any(index_top_3) != 0)):
+            #print('we are in case 3\n')
+            index = index_top_3.index(0)
+            value_top_3.pop(index)
+            index_top_3.pop(index)
+            
+            rankings = [int(user_queries[str(index_top_3[j])].iloc[i]) for j in range(len(index_top_3))]
+            user_queries[str(item)].iloc[i] = np.average(rankings, value_top_3)
+            
+    print('Any left nan values: ', user_queries.iloc[i].hasnans)
         # Return top k queries which were previously nan and now have a high rating
-
+        #print(user_queries.iloc[i])
       
     
 
