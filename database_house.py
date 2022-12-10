@@ -71,7 +71,7 @@ df_fake_queries.to_csv('data_house/queries_to_use.csv', header = True, sep = ','
 column_names = [i for i in df_fake_queries['query_id']]
 df_user_queries = pd.DataFrame(columns = column_names)
 for i in range(len(df_fake_user)):
-    # We choose from 100 to 1000 quereis for each user
+    # We choose from 150 to 1000 quereis for each user
     m = random.randint(500,1000)
     queries = np.random.randint(0,len(df_fake_queries),m)
     

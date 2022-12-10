@@ -204,7 +204,8 @@ for i in range(len(queries)):
         label_id = data['cluster_id_kmeans'].iloc[k]
         #print(label_id)
         matching_outputs[str(label_id)].iloc[i] += 1
-    #print(matching_outputs)
+        #matching_outputs.to_csv('data_house/matching_outputs.csv', header = False, sep = ',', index=False)
+        #print(matching_outputs[:10])
     
     
 maxValueIndex = matching_outputs.idxmax(axis = 1)
@@ -225,7 +226,7 @@ user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',', index_co
 
 fill_value = pd.DataFrame({col: user_queries.mean(axis=1) for col in user_queries.columns})
 user_queries.fillna(fill_value.astype(int), inplace=True)
-print(user_queries)
+print(user_queries[:10])
 
 df_fake_user = pd.read_csv("./data_house/user.csv", sep = ',')
 user_queries.insert(0, "user_id", [k for k in df_fake_user['user_id']], True)
