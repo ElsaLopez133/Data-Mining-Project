@@ -269,8 +269,12 @@ def union(lst1, lst2):
     lst3 = lst1 + lst2 
     return lst3
     
+user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',')
+user_queries_id = user_queries['user_id']
+
 
 user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',', index_col = 0)
+
 
 for i in range(1): #TODO: Update!
     dict_cluster = {}
@@ -318,23 +322,24 @@ for i in range(1): #TODO: Update!
                 min_index = value_top_3.index(min(value_top_3))
                 index_top_3[min_index] = int(query_id)
                 value_top_3[min_index] = similarity_value 
-     
-        #if any(index_top_3) != 0:
-        #    print(value_top_3)
-        #    print(index_top_3)
-    
         
         # Fill the ranking of the current nan query for the current user by averaging the top 3 values
+        k = 5
+        index_top_ranking = [0]*k
+        value_top_ranking = [0]*k
+        print(item)
         # Edge case if all top 3 are 0 average of all queries in a given cluster instead for ranking
         if all([val == 0 for val in index_top_3]):
             #print('we are in case 1\n')
-            user_queries[str(item)].iloc[i] = average_cluster[key][0]
-        
+            ranking = average_cluster[key][0]
+            user_queries[str(item)].iloc[i] = ranking
+    
         # Weighted ranking based on similarity score of top 3!
         if all([val != 0 for val in index_top_3]):
             #print('we are in case 2\n')
             rankings = [int(user_queries[str(index_top_3[j])].iloc[i]) for j in range(len(index_top_3))]
-            user_queries[str(item)].iloc[i] = np.average(rankings, weights = value_top_3)
+            ranking = np.average(rankings, weights = value_top_3)
+            user_queries[str(item)].iloc[i] = ranking
                   
         # Edge case if some of the top 3 are 0, don't use them!
         if ((any(index_top_3) == 0) & (any(index_top_3) != 0)):
@@ -344,11 +349,29 @@ for i in range(1): #TODO: Update!
             index_top_3.pop(index)
             
             rankings = [int(user_queries[str(index_top_3[j])].iloc[i]) for j in range(len(index_top_3))]
-            user_queries[str(item)].iloc[i] = np.average(rankings, value_top_3)
+            ranking = np.average(rankings, value_top_3)
+            user_queries[str(item)].iloc[i] = ranking
             
-    print('Any left nan values: ', user_queries.iloc[i].hasnans)
+        if ranking > min(value_top_ranking):
+            print(ranking, min(value_top_ranking), value_top_ranking.index(min(value_top_ranking)) )
+            min_index_ranking = value_top_ranking.index(min(value_top_ranking))
+            index_top_ranking[min_index_ranking] = int(item)
+            value_top_ranking[min_index_ranking] =  float(ranking)
+        
         # Return top k queries which were previously nan and now have a high rating
-        #print(user_queries.iloc[i])
+        print(index_top_ranking)
+        print(value_top_ranking)
+        
+    print('Any left nan values: ', user_queries.iloc[i].hasnans)
+    
+    #user_queries['user_id'] = user_queries_id
+    user_queries.to_csv('data_house/user_queries_fill.csv', header = True, sep = ',')
+    
+    user_queries =  pd.read_csv("./data_house/user_queries_fill.csv", sep = ',')
+    print(user_queries)
+    print('Any left nan values: ', user_queries.iloc[i].hasnans)
+    print("Reccommended queries for user {}: {} .".format(user_queries['user_id'].iloc[i], index_top_ranking))
+    
       
     
 
