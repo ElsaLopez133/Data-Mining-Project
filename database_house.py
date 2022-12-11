@@ -16,7 +16,7 @@ fake_data = defaultdict(list)
 fake_user = defaultdict(list)
 fake_queries = defaultdict(list)
 
-for _ in range(10000):
+for _ in range(1000):
     fake_data['nrooms'].append(random.randint(1,5))
     fake_data['nbedrooms'].append(random.randint(1,3))
     fake_data['nbath'].append(random.randint(1,3))

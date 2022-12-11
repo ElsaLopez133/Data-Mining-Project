@@ -180,11 +180,13 @@ if data.shape[1] != 2:
     plt.ylabel('principal component 2')
     plt.title('tsne (kmeans)')
     
+
     plt.subplot(1,2,2)
     plt.scatter(tsne_result[:,0], tsne_result[:,1], c=labels, cmap= "plasma") 
     plt.xlabel('principal component 1')
     plt.ylabel('principal component 2')
     plt.title('tsne (DBSCAN)')
+
     
     plt.savefig('./data_house/figure_dbsacn_tsne')
 else:
@@ -269,19 +271,24 @@ print('--------------jaccard similarity-----------\n')
 dict_queries = {}
 for i in range(len(queries)):
     set_query = []
-    for j in range(12):
-        if np.isnan(queries.iloc[i][j+1]):
+    for j in range(1, len(queries.columns)-1):
+        if np.isnan(queries.iloc[i][j]):
             continue
         else:
-            for k in range(int(queries.iloc[i][j+1])):
-                set_query.append(column_names_queries[j+1])
+            for k in range(int(queries.iloc[i][j])):
+                set_query.append(column_names_queries[j])
     dict_queries.update( {str(queries['query_id'].iloc[i]) : set_query} )
 
 #print(dict_queries)
-user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',', index_col = 0)
+user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',')
+recomendations_index = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
+recomendations_value = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
 
-
-for i in range(len(user_queries)):
+for i in range(3):
+    gvn_jsonfile = open("./data_house/query_set.json")
+    json_data = json.load(gvn_jsonfile)
+    
+    #user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',')
     print("---------------user {}------------\n ".format(i))
     dict_cluster = {}
     average_cluster = {}
@@ -289,12 +296,12 @@ for i in range(len(user_queries)):
     user_queries_nan = []
     
     # We create lists containing the indexes of no ranked queries and ranked queries
-    for t,j in user_queries.iloc[i].items():
-        print("index {} | value {} \n".format(t,j))
-        if (np.isnan(j)):
-            user_queries_nan.append(t)
-        else:
-            user_queries_non_nan.append(t)
+    count = 0
+    for t,j in user_queries.iloc[i][1:].items():           
+      if (np.isnan(j)):
+          user_queries_nan.append(t)
+      else:
+          user_queries_non_nan.append(t)
 
     # Create a dictionary
     for j in range(len(np.unique(queries['kmeans_label_id']))):
@@ -314,21 +321,25 @@ for i in range(len(user_queries)):
             ranking_temp.append(user_queries[str(query_id)].iloc[i])
     
         average_cluster[key].append(sum(ranking_temp)/len(ranking_temp))
-    print('average rankings: ',average_cluster)
+    #print('average rankings: ',average_cluster)
          
     #print(dict_queries)
     index_top_ranking = [0,0,0,0,0]
     value_top_ranking = [0,0,0,0,0]
-    recomendations_index = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
-    recomendations_value = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
+
     for item in user_queries_nan:
+        set_query_nan = json_data[str(item)]
+        
         key = str(queries['kmeans_label_id'].iloc[int(item)])
         similarity = []
         index_top_3 = [0,0,0]
         value_top_3 =[0,0,0]
                 
         for query_id in dict_cluster[key]:
-            similarity_value = jaccard_similarity(dict_queries[str(item)], dict_queries[str(query_id)])
+            set_query_non_nan = json_data[str(query_id)]
+            
+            
+            similarity_value = jaccard_similarity(set_query_non_nan, set_query_nan)
             # similarity.append(similarity_value)
             if similarity_value > min(value_top_3):
                 min_index = value_top_3.index(min(value_top_3))
@@ -341,38 +352,43 @@ for i in range(len(user_queries)):
         if all([val == 0 for val in index_top_3]):
             #print('we are in case 1\n')
             ranking = round(average_cluster[key][0],2)
-            user_queries[str(item)].iloc[i] = ranking
+            user_queries.at[i, str(item)] = ranking
     
         # Weighted ranking based on similarity score of top 3!
         if all([val != 0 for val in index_top_3]):
             #print('we are in case 2\n')
             rankings = [int(user_queries[str(index_top_3[j])].iloc[i]) for j in range(len(index_top_3))]
             ranking = round(np.average(rankings, weights = value_top_3),2)
-            user_queries[str(item)].iloc[i] = ranking
+            user_queries.at[i, str(item)] = ranking
                   
         # Edge case if some of the top 3 are 0, don't use them!
-        if ((any(index_top_3) == 0) & (any(index_top_3) != 0)):
+        else:
             #print('we are in case 3\n')
-            index = index_top_3.index(0)
-            value_top_3.pop(index)
-            index_top_3.pop(index)
+            while 0 in index_top_3:
+                index = index_top_3.index(0)
+                value_top_3.pop(index)
+                index_top_3.pop(index)
             
             rankings = [int(user_queries[str(index_top_3[j])].iloc[i]) for j in range(len(index_top_3))]
-            ranking = round(np.average(rankings, value_top_3),2)
-            user_queries[str(item)].iloc[i] = ranking
+            if len(index_top_3) > 1:
+                ranking = round(np.average(rankings, weights = value_top_3),2)
+            else:
+                ranking = rankings[0]
+            user_queries.at[i, str(item)] = ranking
+        
         
         min_value = min(value_top_ranking) 
+        
         if ranking > min_value:
             min_index_ranking = value_top_ranking.index(min(value_top_ranking))
             index_top_ranking[min_index_ranking] = int(item)
             value_top_ranking[min_index_ranking] =  float(ranking)
         
+        #print(user_queries.iloc[i][int(item)])
+        
         
         
     # Return top k queries which were previously nan and now have a high rating
-        
-    user_queries.to_csv('data_house/user_queries_fill.csv', header = True, sep = ',')
-    user_queries =  pd.read_csv("./data_house/user_queries_fill.csv", sep = ',')
     #print('Any left nan values: ', user_queries.iloc[i].hasnans)
     #print("Reccommended queries for user {}: {} .".format(user_queries['user_id'].iloc[i], sort_by_indexes(index_top_ranking, value_top_ranking, True)))
     
@@ -380,13 +396,18 @@ for i in range(len(user_queries)):
     recomendations_index.iloc[i] = [user_queries['user_id'].iloc[i]] + sort_by_indexes(index_top_ranking, value_top_ranking, True)
     value_top_ranking.sort(reverse = True)
     recomendations_value.iloc[i] = [user_queries['user_id'].iloc[i]] + value_top_ranking
-    recomendations_index.to_csv("./data_house/recomendations_index.csv", sep = ',', header = True, index = False)
-    recomendations_value.to_csv("./data_house/recomendations_value.csv", sep = ',', header = True, index = False)
+    #print(user_queries.iloc[i])
+
+    
+recomendations_index.to_csv("./data_house/recomendations_index.csv", sep = ',', header = True, index = False)
+recomendations_value.to_csv("./data_house/recomendations_value.csv", sep = ',', header = True, index = False)
 
 ###################################################################
 ## Fill out utility matrix
 ###################################################################
 
+user_queries.to_csv('./data_house/user_queries_fill.csv', header = True, sep = ',')
+user_queries =  pd.read_csv("./data_house/user_queries_fill.csv", sep = ',')
 
 '''
 fill_value = pd.DataFrame({col: user_queries.mean(axis=1) for col in user_queries.columns})
@@ -399,7 +420,3 @@ user_queries.to_csv('data_house/user_queries_fill.csv', header = True, sep = ','
 
     
 '''
-
-    
-
-
