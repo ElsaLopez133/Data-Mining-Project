@@ -24,6 +24,42 @@ print("Dataset shape:", data.shape)
 data_normal = pd.DataFrame(StandardScaler().fit_transform(data), columns = column_names)
 
 ###################################################################
+## Functions
+###################################################################
+
+def sort_by_indexes(lst, indexes, reverse=False):
+  return [val for (_, val) in sorted(zip(indexes, lst), key=lambda x: \
+          x[0], reverse=reverse)]
+
+def jaccard_similarity(A, B):
+    
+    #Find intersection
+    nominator = intersection(A,B)
+    #print(nominator)
+    #Find union 
+    denominator = union(A,B)
+    #print(denominator)
+    #Take the ratio of sizes
+    similarity = len(nominator)/len(denominator)
+    
+    
+    #print(similarity)
+    return similarity
+
+def intersection(lst1, lst2):
+    lst3 = []
+    for value in lst1:
+        if ((value in lst2) & (len(lst2) > 0)):
+            lst3.append(str(value))
+            lst2.remove(value)
+    return lst3
+
+def union(lst1, lst2):
+    lst3 = lst1 + lst2 
+    return lst3
+    
+  
+###################################################################
 ## Dimensionality reduction
 ###################################################################
 
@@ -176,7 +212,7 @@ queries =  pd.read_csv("./data_house/queries_to_use.csv", sep = ',', index_col =
 data = pd.read_csv("./data_house/database.csv", sep = ',') 
 data['cluster_id_kmeans'] = kmeans.labels_
 data['cluster_id_dbscan'] = labels
-print(data.head())
+#print(data.head())
 
 column_names_queries = queries.columns
 #print(column_names_queries)
@@ -206,7 +242,7 @@ for i in range(len(queries)):
         matching_outputs[str(label_id)].iloc[i] += 1
     
 
-print(matching_outputs[:10])    
+#print(matching_outputs[:10])    
 matching_outputs.to_csv('data_house/matching_outputs.csv', header = False, sep = ',', index=False)
 maxValueIndex = matching_outputs.idxmax(axis = 1)
 queries['kmeans_label_id'] = maxValueIndex
@@ -241,42 +277,11 @@ for i in range(len(queries)):
                 set_query.append(column_names_queries[j+1])
     dict_queries.update( {str(queries['query_id'].iloc[i]) : set_query} )
 
-
-def jaccard_similarity(A, B):
-    
-    #Find intersection
-    nominator = intersection(A,B)
-    #print(nominator)
-    #Find union 
-    denominator = union(A,B)
-    #print(denominator)
-    #Take the ratio of sizes
-    similarity = len(nominator)/len(denominator)
-    
-    
-    #print(similarity)
-    return similarity
-
-def intersection(lst1, lst2):
-    lst3 = []
-    for value in lst1:
-        if ((value in lst2) & (len(lst2) > 0)):
-            lst3.append(str(value))
-            lst2.remove(value)
-    return lst3
-
-def union(lst1, lst2):
-    lst3 = lst1 + lst2 
-    return lst3
-    
-user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',')
-user_queries_id = user_queries['user_id']
-
-
+#print(dict_queries)
 user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',', index_col = 0)
 
 
-for i in range(1): #TODO: Update!
+for i in range(len(user_queries)): #TODO: Update!
     dict_cluster = {}
     average_cluster = {}
     user_queries_non_nan = []
@@ -291,11 +296,12 @@ for i in range(1): #TODO: Update!
 
     # Create a dictionary
     for j in range(len(np.unique(queries['kmeans_label_id']))):
-        dict_cluster.update({str(np.unique(queries['kmeans_label_id'][j][0])) : []})
-        average_cluster.update({str(np.unique(queries['kmeans_label_id'][j][0])) : []})
-        
+        print(np.unique(queries['kmeans_label_id'])[j])
+        dict_cluster.update({str(np.unique(queries['kmeans_label_id'])[j]) : []})
+        average_cluster.update({str(np.unique(queries['kmeans_label_id'])[j]) : []})
+    
     for k in range(len(user_queries_non_nan)):
-        dict_cluster[str([queries['kmeans_label_id'].iloc[k]])].append(user_queries_non_nan[k])
+        dict_cluster[str(queries['kmeans_label_id'].iloc[k])].append(user_queries_non_nan[k])
             
     #print(dict_cluster)
     
@@ -310,12 +316,19 @@ for i in range(1): #TODO: Update!
     print('average rankings: ',average_cluster)
          
     #print(dict_queries)
+    index_top_ranking = [0,0,0,0,0]
+    value_top_ranking = [0,0,0,0,0]
+    recomendations_index = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
+    recomendations_value = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
     for item in user_queries_nan:
-        key = str([queries['kmeans_label_id'].iloc[int(item)]])
+        key = str(queries['kmeans_label_id'].iloc[int(item)])
+        print(key)
         similarity = []
         index_top_3 = [0,0,0]
         value_top_3 =[0,0,0]
+                
         for query_id in dict_cluster[key]:
+            print(query_id, item)
             similarity_value = jaccard_similarity(dict_queries[str(item)], dict_queries[str(query_id)])
             # similarity.append(similarity_value)
             if similarity_value > min(value_top_3):
@@ -324,21 +337,18 @@ for i in range(1): #TODO: Update!
                 value_top_3[min_index] = similarity_value 
         
         # Fill the ranking of the current nan query for the current user by averaging the top 3 values
-        k = 5
-        index_top_ranking = [0]*k
-        value_top_ranking = [0]*k
-        print(item)
+        #print('query id: ', item)
         # Edge case if all top 3 are 0 average of all queries in a given cluster instead for ranking
         if all([val == 0 for val in index_top_3]):
             #print('we are in case 1\n')
-            ranking = average_cluster[key][0]
+            ranking = round(average_cluster[key][0],2)
             user_queries[str(item)].iloc[i] = ranking
     
         # Weighted ranking based on similarity score of top 3!
         if all([val != 0 for val in index_top_3]):
             #print('we are in case 2\n')
             rankings = [int(user_queries[str(index_top_3[j])].iloc[i]) for j in range(len(index_top_3))]
-            ranking = np.average(rankings, weights = value_top_3)
+            ranking = round(np.average(rankings, weights = value_top_3),2)
             user_queries[str(item)].iloc[i] = ranking
                   
         # Edge case if some of the top 3 are 0, don't use them!
@@ -349,31 +359,30 @@ for i in range(1): #TODO: Update!
             index_top_3.pop(index)
             
             rankings = [int(user_queries[str(index_top_3[j])].iloc[i]) for j in range(len(index_top_3))]
-            ranking = np.average(rankings, value_top_3)
+            ranking = round(np.average(rankings, value_top_3),2)
             user_queries[str(item)].iloc[i] = ranking
-            
-        if ranking > min(value_top_ranking):
-            print(ranking, min(value_top_ranking), value_top_ranking.index(min(value_top_ranking)) )
+        
+        min_value = min(value_top_ranking) 
+        if ranking > min_value:
             min_index_ranking = value_top_ranking.index(min(value_top_ranking))
             index_top_ranking[min_index_ranking] = int(item)
             value_top_ranking[min_index_ranking] =  float(ranking)
         
-        # Return top k queries which were previously nan and now have a high rating
-        print(index_top_ranking)
-        print(value_top_ranking)
         
-    print('Any left nan values: ', user_queries.iloc[i].hasnans)
-    
-    #user_queries['user_id'] = user_queries_id
+        
+    # Return top k queries which were previously nan and now have a high rating
+        
     user_queries.to_csv('data_house/user_queries_fill.csv', header = True, sep = ',')
-    
     user_queries =  pd.read_csv("./data_house/user_queries_fill.csv", sep = ',')
-    print(user_queries)
-    print('Any left nan values: ', user_queries.iloc[i].hasnans)
-    print("Reccommended queries for user {}: {} .".format(user_queries['user_id'].iloc[i], index_top_ranking))
+    #print('Any left nan values: ', user_queries.iloc[i].hasnans)
+    #print("Reccommended queries for user {}: {} .".format(user_queries['user_id'].iloc[i], sort_by_indexes(index_top_ranking, value_top_ranking, True)))
     
-      
-    
+    # Write in the dataframe 
+    recomendations_index.iloc[i] = [user_queries['user_id'].iloc[i]] + sort_by_indexes(index_top_ranking, value_top_ranking, True)
+    value_top_ranking.sort(reverse = True)
+    recomendations_value.iloc[i] = [user_queries['user_id'].iloc[i]] + value_top_ranking
+    recomendations_index.to_csv("./data_house/recomendations_index.csv", sep = ',', header = True, index = False)
+    recomendations_value.to_csv("./data_house/recomendations_value.csv", sep = ',', header = True, index = False)
 
 ###################################################################
 ## Fill out utility matrix
