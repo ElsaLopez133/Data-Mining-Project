@@ -281,7 +281,8 @@ for i in range(len(queries)):
 user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',', index_col = 0)
 
 
-for i in range(len(user_queries)): #TODO: Update!
+for i in range(len(user_queries)):
+    print("---------------user {}------------\n ".format(i))
     dict_cluster = {}
     average_cluster = {}
     user_queries_non_nan = []
@@ -289,6 +290,7 @@ for i in range(len(user_queries)): #TODO: Update!
     
     # We create lists containing the indexes of no ranked queries and ranked queries
     for t,j in user_queries.iloc[i].items():
+        print("index {} | value {} \n".format(t,j))
         if (np.isnan(j)):
             user_queries_nan.append(t)
         else:
@@ -296,7 +298,6 @@ for i in range(len(user_queries)): #TODO: Update!
 
     # Create a dictionary
     for j in range(len(np.unique(queries['kmeans_label_id']))):
-        print(np.unique(queries['kmeans_label_id'])[j])
         dict_cluster.update({str(np.unique(queries['kmeans_label_id'])[j]) : []})
         average_cluster.update({str(np.unique(queries['kmeans_label_id'])[j]) : []})
     
@@ -307,7 +308,7 @@ for i in range(len(user_queries)): #TODO: Update!
     
     # We calculate the average ranking of ranked queries in each cluster
     for j in range(len(np.unique(queries['kmeans_label_id']))):
-        key = str(np.unique(queries['kmeans_label_id'])[j][0])
+        key = str(np.unique(queries['kmeans_label_id'])[j])
         ranking_temp = []
         for query_id in dict_cluster[key]:
             ranking_temp.append(user_queries[str(query_id)].iloc[i])
@@ -322,13 +323,11 @@ for i in range(len(user_queries)): #TODO: Update!
     recomendations_value = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
     for item in user_queries_nan:
         key = str(queries['kmeans_label_id'].iloc[int(item)])
-        print(key)
         similarity = []
         index_top_3 = [0,0,0]
         value_top_3 =[0,0,0]
                 
         for query_id in dict_cluster[key]:
-            print(query_id, item)
             similarity_value = jaccard_similarity(dict_queries[str(item)], dict_queries[str(query_id)])
             # similarity.append(similarity_value)
             if similarity_value > min(value_top_3):
