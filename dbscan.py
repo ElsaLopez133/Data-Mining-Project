@@ -307,7 +307,7 @@ for i in range(len(user_queries)): #TODO: Update!
     
     # We calculate the average ranking of ranked queries in each cluster
     for j in range(len(np.unique(queries['kmeans_label_id']))):
-        key = str(np.unique(queries['kmeans_label_id'][j][0]))
+        key = str(np.unique(queries['kmeans_label_id'])[j][0])
         ranking_temp = []
         for query_id in dict_cluster[key]:
             ranking_temp.append(user_queries[str(query_id)].iloc[i])
