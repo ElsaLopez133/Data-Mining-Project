@@ -11,6 +11,7 @@ import warnings
 from sklearn.cluster import KMeans
 from kneed import KneeLocator
 import collections
+import json
 ###################################################################
 ## Read data
 ###################################################################
@@ -284,7 +285,7 @@ user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',')
 recomendations_index = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
 recomendations_value = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
 
-for i in range(3):
+for i in range(len(user_queries)):
     gvn_jsonfile = open("./data_house/query_set.json")
     json_data = json.load(gvn_jsonfile)
     
@@ -354,12 +355,14 @@ for i in range(3):
             ranking = round(average_cluster[key][0],2)
             user_queries.at[i, str(item)] = ranking
     
+    
         # Weighted ranking based on similarity score of top 3!
-        if all([val != 0 for val in index_top_3]):
+        elif all([val != 0 for val in index_top_3]):
             #print('we are in case 2\n')
             rankings = [int(user_queries[str(index_top_3[j])].iloc[i]) for j in range(len(index_top_3))]
             ranking = round(np.average(rankings, weights = value_top_3),2)
             user_queries.at[i, str(item)] = ranking
+        
                   
         # Edge case if some of the top 3 are 0, don't use them!
         else:
@@ -370,15 +373,15 @@ for i in range(3):
                 index_top_3.pop(index)
             
             rankings = [int(user_queries[str(index_top_3[j])].iloc[i]) for j in range(len(index_top_3))]
-            if len(index_top_3) > 1:
+            if len(index_top_3) == 2:
                 ranking = round(np.average(rankings, weights = value_top_3),2)
             else:
                 ranking = rankings[0]
             user_queries.at[i, str(item)] = ranking
         
         
-        min_value = min(value_top_ranking) 
         
+        min_value = min(value_top_ranking) 
         if ranking > min_value:
             min_index_ranking = value_top_ranking.index(min(value_top_ranking))
             index_top_ranking[min_index_ranking] = int(item)
