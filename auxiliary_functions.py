@@ -13,6 +13,10 @@ from kneed import KneeLocator
 import collections
 import json
 
+###################################################################
+## Function to calculate the ranking of new queries
+###################################################################
+
 def ranking_calculation(i,index_top_3, value_top_3, user_queries, average_cluster, key):
     # Edge case if all top 3 are 0 average of all queries in a given cluster instead for ranking
     if all([val == 0 for val in index_top_3]):
@@ -40,7 +44,10 @@ def ranking_calculation(i,index_top_3, value_top_3, user_queries, average_cluste
     return ranking
 
 
-        
+###################################################################
+## Function to represent queries as "sets"
+###################################################################
+      
 def queries_as_sets(queries):
     column_names_queries = queries.columns
     dict_queries = {}
@@ -57,7 +64,12 @@ def queries_as_sets(queries):
     with open("query_set.json", "w") as outfile:
         json.dump(dict_queries, outfile)
     return dict_queries
-        
+
+
+###################################################################
+## Function to assign queries to clusters based on tuples
+###################################################################
+    
 def queries_to_tuples(queries,data,labels,n):
     column_names_queries = queries.columns
     # We create an empty dataframe where we are going to store the matching outputs
@@ -80,9 +92,18 @@ def queries_to_tuples(queries,data,labels,n):
             matching_outputs[str(label_id)].iloc[i] += 1
     return matching_outputs
 
+
+###################################################################
+## Function to sort list based on a different list
+###################################################################
+
 def sort_by_indexes(lst, indexes, reverse=False):
   return [val for (_, val) in sorted(zip(indexes, lst), key=lambda x: \
           x[0], reverse=reverse)]
+
+###################################################################
+## Jaccard Similarity
+###################################################################
 
 def jaccard_similarity(A, B):
     #Find intersection
@@ -105,24 +126,28 @@ def union(lst1, lst2):
     lst3 = lst1 + lst2 
     return lst3
 
-def plot_data(data):
+###################################################################
+## Function to plot 
+###################################################################
+
+def plot_data(data, data_normal, kmeans_labels, dbscan_labels):
     if data.shape[1] != 2: 
 
         pca = PCA(n_components=2)
         principalComponents = pca.fit_transform(data_normal)
         principalDf = pd.DataFrame(data = principalComponents
                     , columns = ['principal component 1', 'principal component 2'])
-        principalDf['color'] = kmeans.labels_
+        principalDf['color'] = kmeans_labels
 
         plt.figure(figsize=(15,8))
         plt.subplot(1,2,1)
-        plt.scatter(principalComponents[:,0], principalComponents[:,1], c=kmeans.labels_, cmap= "plasma") 
+        plt.scatter(principalComponents[:,0], principalComponents[:,1], c=kmeans_labels, cmap= "plasma") 
         plt.xlabel('principal component 1')
         plt.ylabel('principal component 2')
         plt.title('pca (kmeans)')
         
         plt.subplot(1,2,2)
-        plt.scatter(principalComponents[:,0], principalComponents[:,1], c=labels, cmap= "plasma") 
+        plt.scatter(principalComponents[:,0], principalComponents[:,1], c=dbscan_labels, cmap= "plasma") 
         plt.xlabel('principal component 1')
         plt.ylabel('principal component 2')
         plt.title('pca (DBSCAN)')
@@ -135,13 +160,13 @@ def plot_data(data):
         
         plt.figure(figsize=(15,8))
         plt.subplot(1,2,1)
-        plt.scatter(tsne_result[:,0], tsne_result[:,1], c=kmeans.labels_, cmap= "plasma") 
+        plt.scatter(tsne_result[:,0], tsne_result[:,1], c=kmeans_labels, cmap= "plasma") 
         plt.xlabel('principal component 1')
         plt.ylabel('principal component 2')
         plt.title('tsne (kmeans)')
         
         plt.subplot(1,2,2)
-        plt.scatter(tsne_result[:,0], tsne_result[:,1], c=labels, cmap= "plasma") 
+        plt.scatter(tsne_result[:,0], tsne_result[:,1], c=dbscan_labels, cmap= "plasma") 
         plt.xlabel('principal component 1')
         plt.ylabel('principal component 2')
         plt.title('tsne (DBSCAN)')
@@ -149,13 +174,13 @@ def plot_data(data):
     else:
         plt.figure(figsize=(15,8))
         plt.subplot(1,2,1)
-        plt.scatter(data[:,0], data[:,1], c=kmeans.labels_, cmap= "plasma") 
+        plt.scatter(data[:,0], data[:,1], c=kmeans_labels, cmap= "plasma") 
         plt.xlabel('principal component 1')
         plt.ylabel('principal component 2')
         plt.title('kmeans')
         
         plt.subplot(1,2,2)
-        plt.scatter(data[:,0], data[:,1], c=labels, cmap= "plasma") 
+        plt.scatter(data[:,0], data[:,1], c=dbscan_labels, cmap= "plasma") 
         plt.xlabel('principal component 1')
         plt.ylabel('principal component 2')
         plt.title('DBSCAN')

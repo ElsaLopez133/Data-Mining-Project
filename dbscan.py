@@ -16,7 +16,7 @@ import auxiliary_functions
 ###################################################################
 ## Read data
 ###################################################################
-
+print('------------Read data--------------\n')
 data = pd.read_csv("./data_house/database.csv", sep = ',') 
 column_names = data.columns
 n = len(data.columns)
@@ -59,7 +59,6 @@ plt.savefig('./data_house/figure_pre_dbsacn') # showing the plot
 ###################################################################
 ## DBSCAN
 ###################################################################
-# clusters
 print('\n-----------------DBSCAN--------------\n')
 dbscan = DBSCAN(eps = 1.75, min_samples = 8).fit(data) 
 core_samples_mask = np.zeros_like(dbscan.labels_, dtype=bool)
@@ -92,7 +91,6 @@ plt.ylabel("SSE")
 plt.savefig('./data_house/kmeans.png')
 
 kl = KneeLocator(range(1, 30), sse, curve="convex", direction="decreasing")
-
 print('knee elbow: ',kl.elbow)
    
 kmeans = KMeans(init="random", n_clusters=kl.elbow, n_init=10, max_iter=300,random_state=42)
@@ -105,76 +103,8 @@ print('n_clusters for kmeans: ', n_clusters_kmeans)
 ###################################################################
 ## Plot
 ###################################################################
-
-
-if data.shape[1] != 2:  
-    ###################################################################
-    ## PCA
-    ###################################################################
-
-    pca = PCA(n_components=2)
-    principalComponents = pca.fit_transform(data_normal)
-    principalDf = pd.DataFrame(data = principalComponents
-                , columns = ['principal component 1', 'principal component 2'])
-    principalDf['color'] = kmeans.labels_
-    
-    
-
-    plt.figure(figsize=(15,8))
-    plt.subplot(1,2,1)
-    plt.scatter(principalComponents[:,0], principalComponents[:,1], c=kmeans.labels_, cmap= "plasma") 
-    plt.xlabel('principal component 1')
-    plt.ylabel('principal component 2')
-    plt.title('pca (kmeans)')
-    
-    plt.subplot(1,2,2)
-    plt.scatter(principalComponents[:,0], principalComponents[:,1], c=labels, cmap= "plasma") 
-    plt.xlabel('principal component 1')
-    plt.ylabel('principal component 2')
-    plt.title('pca (DBSCAN)')
-    plt.savefig('./data_house/figure_dbsacn_pca') # showing the plot
-
-
-    ###################################################################
-    ## TSNE
-    ###################################################################
-
-    n_components = 2
-    tsne = TSNE(n_components)
-    tsne_result = tsne.fit_transform(data_normal)
-    tsne_result.shape
-    
-    plt.figure(figsize=(15,8))
-    plt.subplot(1,2,1)
-    plt.scatter(tsne_result[:,0], tsne_result[:,1], c=kmeans.labels_, cmap= "plasma") 
-    plt.xlabel('principal component 1')
-    plt.ylabel('principal component 2')
-    plt.title('tsne (kmeans)')
-    
-
-    plt.subplot(1,2,2)
-    plt.scatter(tsne_result[:,0], tsne_result[:,1], c=labels, cmap= "plasma") 
-    plt.xlabel('principal component 1')
-    plt.ylabel('principal component 2')
-    plt.title('tsne (DBSCAN)')
-
-    
-    plt.savefig('./data_house/figure_dbsacn_tsne')
-else:
-    plt.figure(figsize=(15,8))
-    plt.subplot(1,2,1)
-    plt.scatter(data[:,0], data[:,1], c=kmeans.labels_, cmap= "plasma") 
-    plt.xlabel('principal component 1')
-    plt.ylabel('principal component 2')
-    plt.title('kmeans')
-    
-    plt.subplot(1,2,2)
-    plt.scatter(data[:,0], data[:,1], c=labels, cmap= "plasma") 
-    plt.xlabel('principal component 1')
-    plt.ylabel('principal component 2')
-    plt.title('DBSCAN')
-    
-    plt.savefig('./data_house/figure_dbsacn') # showing the plot
+print('\n----------------Plot-----------------\n')
+auxiliary_functions.plot_data(data, data_normal, kmeans.labels_, labels)
 
 
 ###################################################################
@@ -221,8 +151,7 @@ for i in range(len(user_queries)):
     gvn_jsonfile = open("./data_house/query_set.json")
     json_data = json.load(gvn_jsonfile)
     
-    #user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',')
-    print("---------------user {}------------\n ".format(i))
+    print("---------------user {}------------\n ".format(i+1))
     dict_cluster = {}
     average_cluster = {}
     user_queries_non_nan = []
@@ -244,19 +173,14 @@ for i in range(len(user_queries)):
     for k in range(len(user_queries_non_nan)):
         dict_cluster[str(queries['kmeans_label_id'].iloc[k])].append(user_queries_non_nan[k])
             
-    #print(dict_cluster)
-    
     # We calculate the average ranking of ranked queries in each cluster
     for j in range(len(np.unique(queries['kmeans_label_id']))):
         key = str(np.unique(queries['kmeans_label_id'])[j])
         ranking_temp = []
         for query_id in dict_cluster[key]:
             ranking_temp.append(user_queries[str(query_id)].iloc[i])
-    
         average_cluster[key].append(sum(ranking_temp)/len(ranking_temp))
-    #print('average rankings: ',average_cluster)
-         
-    #print(dict_queries)
+
     index_top_ranking = [0,0,0,0,0]
     value_top_ranking = [0,0,0,0,0]
 
@@ -270,19 +194,16 @@ for i in range(len(user_queries)):
                 
         for query_id in dict_cluster[key]:
             set_query_non_nan = json_data[str(query_id)]
-            
-            
             similarity_value = auxiliary_functions.jaccard_similarity(set_query_non_nan, set_query_nan)
             # similarity.append(similarity_value)
+            
             if similarity_value > min(value_top_3):
                 min_index = value_top_3.index(min(value_top_3))
                 index_top_3[min_index] = int(query_id)
                 value_top_3[min_index] = similarity_value 
         
         # Fill the ranking of the current nan query for the current user by averaging the top 3 values
-        
         ranking = auxiliary_functions.ranking_calculation(i,index_top_3, value_top_3, user_queries, average_cluster, key)
-
         user_queries.at[i, str(item)] = ranking
         
         min_value = min(value_top_ranking) 
@@ -301,25 +222,14 @@ for i in range(len(user_queries)):
     value_top_ranking.sort(reverse = True)
     recomendations_value.iloc[i] = [user_queries['user_id'].iloc[i]] + value_top_ranking
 
-    
+# We save the dataframe   
 recomendations_index.to_csv("./data_house/recomendations_index.csv", sep = ',', header = True, index = False)
 recomendations_value.to_csv("./data_house/recomendations_value.csv", sep = ',', header = True, index = False)
 
 ###################################################################
 ## Fill out utility matrix
 ###################################################################
-
+print(user_queries)
 user_queries.to_csv('./data_house/user_queries_fill.csv', header = True, sep = ',')
 user_queries =  pd.read_csv("./data_house/user_queries_fill.csv", sep = ',')
 
-'''
-fill_value = pd.DataFrame({col: user_queries.mean(axis=1) for col in user_queries.columns})
-user_queries.fillna(fill_value.astype(int), inplace=True)
-print(user_queries[:10])
-
-df_fake_user = pd.read_csv("./data_house/user.csv", sep = ',')
-user_queries.insert(0, "user_id", [k for k in df_fake_user['user_id']], True)
-user_queries.to_csv('data_house/user_queries_fill.csv', header = True, sep = ',', index=False)
-
-    
-'''
