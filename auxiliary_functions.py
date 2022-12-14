@@ -139,7 +139,7 @@ def plot_data(data, data_normal, kmeans_labels, dbscan_labels):
                     , columns = ['principal component 1', 'principal component 2'])
         principalDf['color'] = kmeans_labels
 
-        plt.figure(figsize=(15,8))
+        plt.figure(figsize=(6,3))
         plt.subplot(1,2,1)
         plt.scatter(principalComponents[:,0], principalComponents[:,1], c=kmeans_labels, cmap= "plasma") 
         plt.xlabel('principal component 1')
@@ -158,7 +158,7 @@ def plot_data(data, data_normal, kmeans_labels, dbscan_labels):
         tsne_result = tsne.fit_transform(data_normal)
         tsne_result.shape
         
-        plt.figure(figsize=(15,8))
+        plt.figure(figsize=(6,3))
         plt.subplot(1,2,1)
         plt.scatter(tsne_result[:,0], tsne_result[:,1], c=kmeans_labels, cmap= "plasma") 
         plt.xlabel('principal component 1')
@@ -172,7 +172,7 @@ def plot_data(data, data_normal, kmeans_labels, dbscan_labels):
         plt.title('tsne (DBSCAN)')
         plt.savefig('./data_house/figure_dbsacn_tsne')
     else:
-        plt.figure(figsize=(15,8))
+        plt.figure(figsize=(6,3))
         plt.subplot(1,2,1)
         plt.scatter(data[:,0], data[:,1], c=kmeans_labels, cmap= "plasma") 
         plt.xlabel('principal component 1')

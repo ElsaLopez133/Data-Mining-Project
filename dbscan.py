@@ -25,10 +25,6 @@ print("Dataset shape:", data.shape)
 # Normalize data
 data_normal = pd.DataFrame(StandardScaler().fit_transform(data), columns = column_names)
 
-###################################################################
-## Functions
-###################################################################
-
   
 ###################################################################
 ## Dimensionality reduction
@@ -139,6 +135,7 @@ pprint.pprint(event_counts)
 ###################################################################
 ## Jaccard similarity between queries
 ###################################################################
+   
 print('--------------jaccard similarity-----------\n')
 
 dict_queries = auxiliary_functions.queries_as_sets(queries)

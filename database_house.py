@@ -16,7 +16,13 @@ fake_data = defaultdict(list)
 fake_user = defaultdict(list)
 fake_queries = defaultdict(list)
 
-for _ in range(10000):
+# Define the number of:
+nrows = 10000
+nusers = 100
+nqueries = 2000 
+
+print('-------------generate data-----------\n')
+for _ in range(nrows):
     fake_data['nrooms'].append(random.randint(1,5))
     fake_data['nbedrooms'].append(random.randint(1,3))
     fake_data['nbath'].append(random.randint(1,3))
@@ -34,24 +40,29 @@ for _ in range(10000):
 df_fake_data = pd.DataFrame(fake_data)
 df_fake_data.to_csv('data_house/database.csv', header = True, sep = ',')
 
-print(df_fake_data[:10])
+print(df_fake_data[:5])
 n = len(df_fake_data.columns)
 
+
+print('-------------generate users-----------\n')
 # We create the users with their id
-for _ in range(100):
+for _ in range(nusers):
     fake_user["user_id"].append(fake.unique.ssn())
     df_fake_user = pd.DataFrame(fake_user, columns=['user_id'])
     
 df_fake_user.to_csv('data_house/user.csv', header = True, sep = ',')
+print(df_fake_user[:5])
+
+print('-------------generate queries-----------\n')
 
 # We create the queries. We can create queries with 1 until n conditions, where n is the number of columns of fake_data
 with open('data_house/queries.csv', 'w', encoding='UTF8', newline = '') as f:
     writer = csv.writer(f)
     columns_names = ['query_id'] 
     columns_names.extend(df_fake_data.columns)
-    df_fake_queries = pd.DataFrame(index = range(2000), columns = columns_names)
+    df_fake_queries = pd.DataFrame(index = range(nqueries), columns = columns_names)
 
-    for i in range(2000):
+    for i in range(nqueries):
         row = [i]
         df_fake_queries['query_id'].iloc[i] = i
         
@@ -71,7 +82,8 @@ df_fake_queries.to_csv('data_house/queries_to_use.csv', header = True, sep = ','
 column_names = [i for i in df_fake_queries['query_id']]
 df_user_queries = pd.DataFrame(columns = column_names)
 
-values = np.array([[60,100],[1,100],[1,50],[30,80]])
+print('-------------generate rankings-----------\n')
+values = np.array([[60,100],[1,100],[1,50],[30,80], [20,60], [20,90]])
 for i in range(len(df_fake_user)):
     index = np.random.randint(0, len(values),1)[0]
     # We choose from 100 to 1000 quereis for each user
@@ -89,7 +101,7 @@ for i in range(len(df_fake_user)):
 
 
 df_user_queries.insert(0, "user_id", [k for k in df_fake_user['user_id']], True)
-print(df_user_queries)
+print(df_user_queries[:5])
 df_user_queries.to_csv('data_house/user_queries.csv', header = True, sep = ',', index=False)
 
 
