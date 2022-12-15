@@ -17,17 +17,20 @@ import json
 ## Function to calculate the ranking of new queries
 ###################################################################
 
-def ranking_calculation(i,index_top_3, value_top_3, user_queries, average_cluster, key):
+def ranking_calculation(i,index_top_3, value_top_3, user_queries, average_cluster, key, count):
+    #We define a count vector that keeps track of the number of cases
     # Edge case if all top 3 are 0 average of all queries in a given cluster instead for ranking
     if all([val == 0 for val in index_top_3]):
         #print('we are in case 1\n')
         ranking = round(average_cluster[key][0],2)
+        count[0] += 1
         
     # Weighted ranking based on similarity score of top 3!
     elif all([val != 0 for val in index_top_3]):
         #print('we are in case 2\n')
         rankings = [int(user_queries[str(index_top_3[j])].iloc[i]) for j in range(len(index_top_3))]
         ranking = round(np.average(rankings, weights = value_top_3),2)   
+        count[1] += 1
     # Edge case if some of the top 3 are 0, don't use them!
     else:
         #print('we are in case 3\n')
@@ -41,7 +44,8 @@ def ranking_calculation(i,index_top_3, value_top_3, user_queries, average_cluste
             ranking = round(np.average(rankings, weights = value_top_3),2)
         else:
             ranking = rankings[0]
-    return ranking
+        count[2] += 1    
+    return ranking, count
 
 
 ###################################################################
