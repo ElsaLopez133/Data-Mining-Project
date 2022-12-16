@@ -12,6 +12,7 @@ from sklearn.cluster import KMeans
 from kneed import KneeLocator
 import collections
 import json
+from itertools import combinations
 
 ###################################################################
 ## Function to calculate the ranking of new queries
@@ -189,3 +190,88 @@ def plot_data(data, data_normal, kmeans_labels, dbscan_labels):
         plt.ylabel('principal component 2')
         plt.title('DBSCAN')
         plt.savefig('./data_house/figure_dbsacn') # showing the plot
+        
+
+###################################################################
+## Combinations
+###################################################################          
+
+def combination(row):
+    list_combinations = list()
+    for n in range(len(row) + 1):
+        list_combinations += list(combinations(row, n))
+    for i in range(len(list_combinations)):
+        if len(list_combinations[i]) == 1:
+            list_combinations[i] = list_combinations[i][0]
+    return list_combinations[1:], len(list_combinations) -1
+
+
+###################################################################
+## Matches
+################################################################### 
+
+def matching_queries(length, query_columns, query, dict_query, queries):
+    if (length == 1):
+        print('Case 1: one common value')
+        idx = list(queries[queries[str(query_columns[0])] == query.iloc[0,0]].index)
+        dict_query.update( {str(query_columns[0]) : idx} )
+        
+        print('Dictionary: ', dict_query)
+            
+    elif (length == 2):
+        print('Case 2: up to 2 common value')
+        for i in range(2):
+            idx = list(queries[queries[str(query_columns[i])] == query.iloc[0,i]].index)
+            dict_query.update( {str(query_columns[i]) : idx} )
+                
+        idx = list(queries[queries[str(query_columns[0])] == query.iloc[0,0]][queries[str(query_columns[1])] == query.iloc[0,1]].index)
+        cond = str(query_columns[0]), str(query_columns[1])
+        dict_query.update( {str(cond) : idx} )
+        
+        print('Dictionary: ', dict_query)
+            
+    elif (length == 3):
+        print('Case 3: up to 3 common value')
+        for i in range(3):
+            idx = list(queries[queries[str(query_columns[i])] == query.iloc[0,i]].index)
+            dict_query.update( {str(query_columns[i]) : idx} )
+                
+        for j in range(3):
+            for i in range(j+1,3):
+                idx = list(queries[queries[str(query_columns[j])] == query.iloc[0,j]][queries[str(query_columns[i])] == query.iloc[0,i]].index)
+                cond = str(query_columns[j]), str(query_columns[i])
+                dict_query.update( {str(cond) : idx} )
+        
+        idx = list(queries[queries[str(query_columns[0])] == query.iloc[0,0]][queries[str(query_columns[1])] == query.iloc[0,1]][queries[str(query_columns[2])] == query.iloc[0,2]].index)  
+        cond = str(query_columns[0]), str(query_columns[1]), str(query_columns[2])
+        dict_query.update( {str(cond) : idx} ) 
+        print('Dictionary: ', dict_query)
+        
+    elif (length == 4):
+        print('Case 4: up to 4 common value')
+        for i in range(4):
+            idx = list(queries[queries[str(query_columns[i])] == query.iloc[0,i]].index)
+            dict_query.update( {str(query_columns[i]) : idx} )
+                
+        for j in range(4):
+            for i in range(j+1,4):
+                idx = list(queries[queries[str(query_columns[j])] == query.iloc[0,j]][queries[str(query_columns[i])] == query.iloc[0,i]].index)
+                cond = str(query_columns[j]), str(query_columns[i])
+                dict_query.update( {str(cond) : idx} )
+        
+        for j in range(4):
+            for i in range(j+1,4):
+                for k in range(i+1,4):
+                    idx = list(queries[queries[str(query_columns[j])] == query.iloc[0,j]][queries[str(query_columns[i])] == query.iloc[0,i]][queries[queries[str(query_columns[k])] == query.iloc[0,k]]].index)
+                    cond = str(query_columns[j]), str(query_columns[i]), str(query_columns[k])
+                    dict_query.update( {str(cond) : idx} )
+        
+        
+        idx = list(queries[queries[str(query_columns[0])] == query.iloc[0,0]][queries[str(query_columns[1])] == query.iloc[0,1]][queries[str(query_columns[2])] == query.iloc[0,2]][queries[str(query_columns[3])] == query.iloc[0,3]].index)  
+        cond = str(query_columns[0]), str(query_columns[1]), str(query_columns[2]), str(query_columns[3] )
+        dict_query.update( {str(cond) : idx} ) 
+        print('Dictionary: ', dict_query)
+        
+        with open("query_matches_partb.json", "w") as outfile:
+            json.dump(dict_query, outfile)
+    return dict_query
