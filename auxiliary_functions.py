@@ -53,7 +53,7 @@ def ranking_calculation(i,index_top_3, value_top_3, user_queries, average_cluste
 ## Function to represent queries as "sets"
 ###################################################################
       
-def queries_as_sets(queries):
+def queries_as_sets(queries, filename):
     column_names_queries = queries.columns
     dict_queries = {}
     for i in range(len(queries)):
@@ -66,7 +66,7 @@ def queries_as_sets(queries):
                     set_query.append(column_names_queries[j])
         dict_queries.update( {str(queries['query_id'].iloc[i]) : set_query} )
         
-    with open("query_set.json", "w") as outfile:
+    with open(str(filename), "w") as outfile:
         json.dump(dict_queries, outfile)
     return dict_queries
 
