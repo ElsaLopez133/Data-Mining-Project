@@ -227,8 +227,6 @@ def matching_queries(length, query_columns, query, dict_query, queries):
         idx = list(queries[queries[str(query_columns[0])] == query.iloc[0,0]][queries[str(query_columns[1])] == query.iloc[0,1]].index)
         cond = str(query_columns[0]), str(query_columns[1])
         dict_query.update( {str(cond) : idx} )
-        
-        print('Dictionary: ', dict_query)
             
     elif (length == 3):
         print('Case 3: up to 3 common value')
@@ -245,7 +243,6 @@ def matching_queries(length, query_columns, query, dict_query, queries):
         idx = list(queries[queries[str(query_columns[0])] == query.iloc[0,0]][queries[str(query_columns[1])] == query.iloc[0,1]][queries[str(query_columns[2])] == query.iloc[0,2]].index)  
         cond = str(query_columns[0]), str(query_columns[1]), str(query_columns[2])
         dict_query.update( {str(cond) : idx} ) 
-        print('Dictionary: ', dict_query)
         
     elif (length == 4):
         print('Case 4: up to 4 common value')
@@ -270,8 +267,17 @@ def matching_queries(length, query_columns, query, dict_query, queries):
         idx = list(queries[queries[str(query_columns[0])] == query.iloc[0,0]][queries[str(query_columns[1])] == query.iloc[0,1]][queries[str(query_columns[2])] == query.iloc[0,2]][queries[str(query_columns[3])] == query.iloc[0,3]].index)  
         cond = str(query_columns[0]), str(query_columns[1]), str(query_columns[2]), str(query_columns[3] )
         dict_query.update( {str(cond) : idx} ) 
-        print('Dictionary: ', dict_query)
         
         with open("query_matches_partb.json", "w") as outfile:
             json.dump(dict_query, outfile)
     return dict_query
+
+
+###################################################################
+## Find k highest values
+################################################################### 
+
+def find_highest_values(list_to_search, ordered_nums_to_return=None):
+    if ordered_nums_to_return:
+        return sorted(set(list_to_search), reverse=True)[0:ordered_nums_to_return]
+    return [sorted(list_to_search, reverse=True)[0]]
