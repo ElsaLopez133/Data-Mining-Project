@@ -58,7 +58,7 @@ def queries_as_sets(queries, filename):
     dict_queries = {}
     for i in range(len(queries)):
         set_query = []
-        for j in range(1, len(queries.columns)-1):
+        for j in range(1, len(queries.columns)):
             if np.isnan(queries.iloc[i][j]):
                 continue
             else:
