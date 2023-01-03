@@ -140,7 +140,7 @@ print('--------------jaccard similarity-----------\n')
 
 dict_queries = auxiliary_functions.queries_as_sets(queries)
     
-user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',')
+user_queries =  pd.read_csv("./data_house/utility_matrix.csv", sep = ',')
 recomendations_index = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
 recomendations_value = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
 
@@ -227,6 +227,6 @@ recomendations_value.to_csv("./data_house/recomendations_value.csv", sep = ',', 
 ## Fill out utility matrix
 ###################################################################
 print(user_queries)
-user_queries.to_csv('./data_house/user_queries_fill.csv', header = True, sep = ',')
-user_queries =  pd.read_csv("./data_house/user_queries_fill.csv", sep = ',')
+user_queries.to_csv('./data_house/utility_matrix_fill.csv', header = True, sep = ',')
+user_queries =  pd.read_csv("./data_house/utility_matrix_fill.csv", sep = ',')
 
