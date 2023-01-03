@@ -29,7 +29,7 @@ for _ in range(nrows):
     fake_data['sm'].append(random.randint(1,40))
     fake_data['garden_sm'].append(random.randint(1,10))
     fake_data['floors'].append(random.randint(1,3))
-    fake_data['gargae_sm'].append(random.randint(1, 10))
+    fake_data['garage_sm'].append(random.randint(1, 10))
     fake_data['price'].append(random.randint(1, 50))
     fake_data['year'].append(random.randint(1, 30))
     fake_data['windows'].append(random.randint(1,20))
@@ -102,7 +102,7 @@ for i in range(len(df_fake_user)):
 
 df_user_queries.insert(0, "user_id", [k for k in df_fake_user['user_id']], True)
 print(df_user_queries[:5])
-df_user_queries.to_csv('data_house/user_queries.csv', header = True, sep = ',', index=False)
+df_user_queries.to_csv('data_house/utility_matrix.csv', header = True, sep = ',', index=False)
 
 
 
