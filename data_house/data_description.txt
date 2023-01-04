@@ -1,0 +1,24 @@
+*Database - database.csv
+This data represents attributes of housing properties with the following features:
+
+nrooms: number of rooms
+nbedrooms: number of bedrooms
+nbath: number of bathrooms
+sm: square meters of the indoor area
+garden_sm: square meters of the garden
+floors: floors of the house
+gargae_sm: square meters of the garage
+price: estimated Euro sales price in 2022 in thousands 
+year: years since it was built compared to 2022
+windows: number of windows
+dist_city: distance to the closest city center in kilometers
+doors: number of doors
+
+* Users - user.csv
+List of user ids
+
+* Queries - queries.csv
+Query id followed by tuples of SQL-style which are meant to be concatinated through the AND operator. Each query is used at least by one user and all queries return at least one result from the database.
+
+* Utility-Matrix utility_matrix.csv
+Utility matrix showing ratings of each user to each query. Sometimes queries are not rated by a specific user yet. These fields are empty.
