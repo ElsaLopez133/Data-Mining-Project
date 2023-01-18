@@ -138,7 +138,7 @@ pprint.pprint(event_counts)
    
 print('--------------jaccard similarity-----------\n')
 
-dict_queries = auxiliary_functions.queries_as_sets(queries)
+dict_queries = auxiliary_functions.queries_as_sets(queries,'query_set.json')
     
 user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',')
 recomendations_index = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
@@ -229,4 +229,6 @@ recomendations_value.to_csv("./data_house/recomendations_value.csv", sep = ',', 
 print(user_queries)
 user_queries.to_csv('./data_house/user_queries_fill.csv', header = True, sep = ',')
 user_queries =  pd.read_csv("./data_house/user_queries_fill.csv", sep = ',')
+
+
 

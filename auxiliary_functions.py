@@ -13,6 +13,8 @@ from kneed import KneeLocator
 import collections
 import json
 from itertools import combinations
+import random
+from sklearn.preprocessing import MinMaxScaler
 
 ###################################################################
 ## Function to calculate the ranking of new queries
@@ -59,7 +61,8 @@ def queries_as_sets(queries, filename):
     for i in range(len(queries)):
         set_query = []
         for j in range(1, len(queries.columns)):
-            if np.isnan(queries.iloc[i][j]):
+            print(int(queries.iloc[i][j]))
+            if np.isnan(int(queries.iloc[i][j])):
                 continue
             else:
                 for k in range(int(queries.iloc[i][j])):
@@ -281,3 +284,139 @@ def find_highest_values(list_to_search, ordered_nums_to_return=None):
     if ordered_nums_to_return:
         return sorted(set(list_to_search), reverse=True)[0:ordered_nums_to_return]
     return [sorted(list_to_search, reverse=True)[0]]
+
+
+###################################################################
+## Remove ranodm values of utility matrix
+################################################################### 
+
+def remove_numbers(user_queries, len_list, row, columns, list_remove, user_queries_test):
+    while len_list < 600:
+        i = random.randint(0,row-1)
+        j = random.randint(0,columns-1)
+        if pd.isnull(user_queries.iloc[i,j]):
+            continue
+            
+        else:
+            if [i,j] in list_remove:
+                continue
+            else:
+                list_remove.append([i,j])
+                user_queries_test.iloc[i,j] = np.nan
+        
+        len_list = len(list_remove)
+    return list_remove, user_queries_test
+
+
+###################################################################
+## Recommender function
+################################################################### 
+
+def utility_matrix_rec(path_user_queries_test, labels, n, kmeans_labels):
+    print('-------------------query assignement-------------\n')
+    queries =  pd.read_csv("./data_house/queries_to_use.csv", sep = ',', index_col = 0)
+    data = pd.read_csv("./data_house/database.csv", sep = ',') 
+    data['cluster_id_kmeans'] = kmeans_labels
+    data['cluster_id_dbscan'] = labels
+    column_names_queries = queries.columns
+
+    matching_outputs = queries_to_tuples(queries,data, kmeans_labels, n)
+    matching_outputs.to_csv('data_house/matching_outputs_test.csv', header = False, sep = ',', index=False)
+    maxValueIndex = matching_outputs.idxmax(axis = 1)
+    queries['kmeans_label_id'] = maxValueIndex
+
+    print('-------------queries-----------\n')
+    event_counts = collections.Counter(queries['kmeans_label_id'])
+
+    print('-------------database-----------\n')
+    event_counts = collections.Counter(data['cluster_id_kmeans'])
+    
+    print('--------------jaccard similarity-----------\n')
+        
+    user_queries =  pd.read_csv(path_user_queries_test, sep = ',')
+    recomendations_index = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
+    recomendations_value = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
+
+    for i in range(len(user_queries)):
+        gvn_jsonfile = open("data_house/jsonfiles/query_set.json")
+        json_data = json.load(gvn_jsonfile)
+        
+        print("---------------user {}------------\n ".format(i+1))
+        dict_cluster = {}
+        average_cluster = {}
+        user_queries_non_nan = []
+        user_queries_nan = []
+        
+        # We create lists containing the indexes of no ranked queries and ranked queries
+        count = 0
+        for t,j in user_queries.iloc[i][1:].items():           
+            if (np.isnan(j)):
+                user_queries_nan.append(t)
+            else:
+                user_queries_non_nan.append(t)
+
+        # Create a dictionary
+        for j in range(len(np.unique(queries['kmeans_label_id']))):
+            dict_cluster.update({str(np.unique(queries['kmeans_label_id'])[j]) : []})
+            average_cluster.update({str(np.unique(queries['kmeans_label_id'])[j]) : []})
+        
+        for k in range(len(user_queries_non_nan)):
+            dict_cluster[str(queries['kmeans_label_id'].iloc[k])].append(user_queries_non_nan[k])
+                
+        # We calculate the average ranking of ranked queries in each cluster
+        for j in range(len(np.unique(queries['kmeans_label_id']))):
+            key = str(np.unique(queries['kmeans_label_id'])[j])
+            ranking_temp = []
+            for query_id in dict_cluster[key]:
+                ranking_temp.append(user_queries[str(query_id)].iloc[i])
+            average_cluster[key].append(sum(ranking_temp)/len(ranking_temp))
+
+        index_top_ranking = [0,0,0,0,0]
+        value_top_ranking = [0,0,0,0,0]
+
+        for item in user_queries_nan:
+            set_query_nan = json_data[str(item)]
+            
+            key = str(queries['kmeans_label_id'].iloc[int(item)])
+            similarity = []
+            index_top_3 = [0,0,0]
+            value_top_3 =[0,0,0]
+                    
+            for query_id in dict_cluster[key]:
+                set_query_non_nan = json_data[str(query_id)]
+                similarity_value = jaccard_similarity(set_query_non_nan, set_query_nan)
+                # similarity.append(similarity_value)
+                
+                if similarity_value > min(value_top_3):
+                    min_index = value_top_3.index(min(value_top_3))
+                    index_top_3[min_index] = int(query_id)
+                    value_top_3[min_index] = similarity_value 
+            
+            # Fill the ranking of the current nan query for the current user by averaging the top 3 values
+            ranking = ranking_calculation(i,index_top_3, value_top_3, user_queries, average_cluster, key)
+            user_queries.at[i, str(item)] = ranking
+            
+            min_value = min(value_top_ranking) 
+            if ranking > min_value:
+                min_index_ranking = value_top_ranking.index(min(value_top_ranking))
+                index_top_ranking[min_index_ranking] = int(item)
+                value_top_ranking[min_index_ranking] =  float(ranking) 
+
+    user_queries.to_csv('./data_house/user_queries_fill_test.csv', header = True, sep = ',')
+    user_queries_test =  pd.read_csv("./data_house/user_queries_fill_test.csv", sep = ',')
+
+    return user_queries_test
+
+
+
+###################################################################
+## Normalizing utility matrix
+################################################################### 
+def scaler_utility_matrix(user_queries):
+    seq = user_queries['user_id']
+    x = user_queries.iloc[:,2:].values #returns a numpy array
+    min_max_scaler = MinMaxScaler()
+    x_scaled = min_max_scaler.fit_transform(x.transpose())
+    user_queries_minmax = pd.DataFrame(x_scaled.transpose()*100)
+    user_queries_minmax.insert(0,'user_id',seq)
+    return user_queries_minmax
