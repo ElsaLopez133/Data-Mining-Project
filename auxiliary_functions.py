@@ -312,7 +312,7 @@ def remove_numbers(user_queries, len_list, row, columns, list_remove, user_queri
 ################################################################### 
 
 def utility_matrix_rec(path_user_queries_test, labels, n, kmeans_labels):
-    print('-------------------query assignement-------------\n')
+    #print('-------------------query assignement-------------\n')
     queries =  pd.read_csv("./data_house/queries_to_use.csv", sep = ',', index_col = 0)
     data = pd.read_csv("./data_house/database.csv", sep = ',') 
     data['cluster_id_kmeans'] = kmeans_labels
@@ -324,13 +324,13 @@ def utility_matrix_rec(path_user_queries_test, labels, n, kmeans_labels):
     maxValueIndex = matching_outputs.idxmax(axis = 1)
     queries['kmeans_label_id'] = maxValueIndex
 
-    print('-------------queries-----------\n')
+    #print('-------------queries-----------\n')
     event_counts = collections.Counter(queries['kmeans_label_id'])
 
-    print('-------------database-----------\n')
+    #print('-------------database-----------\n')
     event_counts = collections.Counter(data['cluster_id_kmeans'])
     
-    print('--------------jaccard similarity-----------\n')
+    #print('--------------jaccard similarity-----------\n')
         
     user_queries =  pd.read_csv(path_user_queries_test, sep = ',', index_col = 0)
     recomendations_index = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
@@ -340,7 +340,7 @@ def utility_matrix_rec(path_user_queries_test, labels, n, kmeans_labels):
         gvn_jsonfile = open("./jsonfiles/query_set.json")
         json_data = json.load(gvn_jsonfile)
         
-        print("---------------user {}------------\n ".format(i+1))
+        #print("---------------user {}------------\n ".format(i+1))
         dict_cluster = {}
         average_cluster = {}
         user_queries_non_nan = []
@@ -404,7 +404,6 @@ def utility_matrix_rec(path_user_queries_test, labels, n, kmeans_labels):
                 value_top_ranking[min_index_ranking] =  float(ranking) 
         
         user_queries.to_csv('./data_house/user_queries_fill_test.csv', header = True, sep = ',')
-
 
 
 ###################################################################
