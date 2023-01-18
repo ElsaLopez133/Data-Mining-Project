@@ -296,7 +296,6 @@ def remove_numbers(user_queries, len_list, row, columns, list_remove, user_queri
         j = random.randint(0,columns-1)
         if pd.isnull(user_queries.iloc[i,j]):
             continue
-            
         else:
             if [i,j] in list_remove:
                 continue
@@ -333,12 +332,12 @@ def utility_matrix_rec(path_user_queries_test, labels, n, kmeans_labels):
     
     print('--------------jaccard similarity-----------\n')
         
-    user_queries =  pd.read_csv(path_user_queries_test, sep = ',')
+    user_queries =  pd.read_csv(path_user_queries_test, sep = ',', index_col = 0)
     recomendations_index = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
     recomendations_value = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
 
     for i in range(len(user_queries)):
-        gvn_jsonfile = open("data_house/jsonfiles/query_set.json")
+        gvn_jsonfile = open("./jsonfiles/query_set.json")
         json_data = json.load(gvn_jsonfile)
         
         print("---------------user {}------------\n ".format(i+1))
@@ -348,12 +347,13 @@ def utility_matrix_rec(path_user_queries_test, labels, n, kmeans_labels):
         user_queries_nan = []
         
         # We create lists containing the indexes of no ranked queries and ranked queries
-        count = 0
         for t,j in user_queries.iloc[i][1:].items():           
             if (np.isnan(j)):
                 user_queries_nan.append(t)
             else:
                 user_queries_non_nan.append(t)
+            n_nan_queries = len(user_queries_nan)
+            count = [0,0,0]
 
         # Create a dictionary
         for j in range(len(np.unique(queries['kmeans_label_id']))):
@@ -393,19 +393,17 @@ def utility_matrix_rec(path_user_queries_test, labels, n, kmeans_labels):
                     value_top_3[min_index] = similarity_value 
             
             # Fill the ranking of the current nan query for the current user by averaging the top 3 values
-            ranking = ranking_calculation(i,index_top_3, value_top_3, user_queries, average_cluster, key)
+            ranking, count = ranking_calculation(i,index_top_3, value_top_3, user_queries, average_cluster, key, count)
             user_queries.at[i, str(item)] = ranking
+            
             
             min_value = min(value_top_ranking) 
             if ranking > min_value:
                 min_index_ranking = value_top_ranking.index(min(value_top_ranking))
                 index_top_ranking[min_index_ranking] = int(item)
                 value_top_ranking[min_index_ranking] =  float(ranking) 
-
-    user_queries.to_csv('./data_house/user_queries_fill_test.csv', header = True, sep = ',')
-    user_queries_test =  pd.read_csv("./data_house/user_queries_fill_test.csv", sep = ',')
-
-    return user_queries_test
+        
+        user_queries.to_csv('./data_house/user_queries_fill_test.csv', header = True, sep = ',')
 
 
 

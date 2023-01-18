@@ -13,6 +13,7 @@ from kneed import KneeLocator
 import collections
 import json
 import auxiliary_functions
+import pprint
 ###################################################################
 ## Read data
 ###################################################################
@@ -119,30 +120,30 @@ matching_outputs.to_csv('data_house/matching_outputs.csv', header = False, sep =
 maxValueIndex = matching_outputs.idxmax(axis = 1)
 queries['kmeans_label_id'] = maxValueIndex
 
-
 print('-------------queries-----------\n')
 print("Used clusters: ", np.unique(queries['kmeans_label_id']))
 event_counts = collections.Counter(queries['kmeans_label_id'])
-import pprint
 pprint.pprint(event_counts)
 
 print('-------------database-----------\n')
 print("Database: ", np.unique(data['cluster_id_kmeans']))
 event_counts = collections.Counter(data['cluster_id_kmeans'])
-import pprint
 pprint.pprint(event_counts)
+
+queries.to_csv("./data_house/queries_labels.csv", sep = ',', header = True, index = False)
+
 
 ###################################################################
 ## Jaccard similarity between queries
 ###################################################################
-   
 print('--------------jaccard similarity-----------\n')
 
-dict_queries = auxiliary_functions.queries_as_sets(queries,'query_set.json')
+dict_queries = auxiliary_functions.queries_as_sets(queries, 'query_set.json')
     
-user_queries =  pd.read_csv("./data_house/utility_matrix.csv", sep = ',')
+user_queries =  pd.read_csv("./data_house/user_queries.csv", sep = ',')
 recomendations_index = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
 recomendations_value = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','top1', 'top2', 'top3', 'top4', 'top5'])
+count_value = pd.DataFrame(0, index = range(len(user_queries)), columns =['user_id','case1', 'case2', 'case3', 'prop1', 'prop2', 'prop3'])
 
 for i in range(len(user_queries)):
     gvn_jsonfile = open("./data_house/query_set.json")
@@ -155,12 +156,13 @@ for i in range(len(user_queries)):
     user_queries_nan = []
     
     # We create lists containing the indexes of no ranked queries and ranked queries
-    count = 0
     for t,j in user_queries.iloc[i][1:].items():           
       if (np.isnan(j)):
           user_queries_nan.append(t)
       else:
           user_queries_non_nan.append(t)
+    n_nan_queries = len(user_queries_nan)
+    count = [0,0,0]
 
     # Create a dictionary
     for j in range(len(np.unique(queries['kmeans_label_id']))):
@@ -200,8 +202,9 @@ for i in range(len(user_queries)):
                 value_top_3[min_index] = similarity_value 
         
         # Fill the ranking of the current nan query for the current user by averaging the top 3 values
-        ranking = auxiliary_functions.ranking_calculation(i,index_top_3, value_top_3, user_queries, average_cluster, key)
+        ranking, count = auxiliary_functions.ranking_calculation(i,index_top_3, value_top_3, user_queries, average_cluster, key, count)
         user_queries.at[i, str(item)] = ranking
+        
         
         min_value = min(value_top_ranking) 
         if ranking > min_value:
@@ -218,6 +221,12 @@ for i in range(len(user_queries)):
     recomendations_index.iloc[i] = [user_queries['user_id'].iloc[i]] + auxiliary_functions.sort_by_indexes(index_top_ranking, value_top_ranking, True)
     value_top_ranking.sort(reverse = True)
     recomendations_value.iloc[i] = [user_queries['user_id'].iloc[i]] + value_top_ranking
+    prop_count = [round(i/n_nan_queries, 2) for i in count]
+    print(count, prop_count)
+    count_value.iloc[i] = [user_queries['user_id'].iloc[i]] + count + prop_count
+    
+    # We write a data frame with the counts and the proportions
+    
 
 # We save the dataframe   
 recomendations_index.to_csv("./data_house/recomendations_index.csv", sep = ',', header = True, index = False)
