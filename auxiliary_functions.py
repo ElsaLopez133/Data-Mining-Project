@@ -305,23 +305,30 @@ def remove_numbers(user_queries, len_list, row, columns, list_remove, user_queri
         len_list = len(list_remove)
     return list_remove, user_queries_test
 
-def remove_numbers2(user_queries, len_list, row, columns, list_remove2, user_queries_test):
+###################################################################
+## Remove ranodm values of user in utility matrix
+################################################################### 
+
+def remove_numbers2(user_queries, len_list, row, columns, list_remove, user_queries_test):
     #We select a random user
-    user = random.randint(0,len(user_queries))
+    user = random.randint(1,len(user_queries))
+    li = list(user_queries.iloc[user,1:])
+    li_not_nan = [i for i, element in enumerate(li) if np.isnan(element)]
+    li_nan = [i for i in range(len(li)) if i not in li_not_nan]
+        
+    len_list = len(li_nan)
+    
     while len_list < 1400:
-        j = random.randint(0,columns-1)
-        if pd.isnull(user_queries.iloc[user,j]):
+        j = random.randint(0,len(li_not_nan))
+        
+        if [user,li_not_nan[j]] in list_remove:
             continue
         else:
-            if [user,j] in list_remove2:
-                continue
-            else:
-                list_remove2.append([user,j])
-                user_queries_test.iloc[user,j] = np.nan
+            list_remove.append([user,li_not_nan[j]])
+            user_queries_test.iloc[user,li_not_nan[j]] = np.nan
         
-        len_list = len(list_remove2)
-    return list_remove2, user_queries_test
-
+        len_list = len(list_remove)
+    return user,list_remove, user_queries_test
 
 ###################################################################
 ## Recommender function
