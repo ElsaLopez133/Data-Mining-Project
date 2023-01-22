@@ -60,9 +60,8 @@ def queries_as_sets(queries, filename):
     dict_queries = {}
     for i in range(len(queries)):
         set_query = []
-        for j in range(1, len(queries.columns)):
-            print(int(queries.iloc[i][j]))
-            if np.isnan(int(queries.iloc[i][j])):
+        for j in range(1, len(queries.columns)-1):
+            if np.isnan(queries.iloc[i][j]):
                 continue
             else:
                 for k in range(int(queries.iloc[i][j])):
@@ -305,6 +304,23 @@ def remove_numbers(user_queries, len_list, row, columns, list_remove, user_queri
         
         len_list = len(list_remove)
     return list_remove, user_queries_test
+
+def remove_numbers2(user_queries, len_list, row, columns, list_remove2, user_queries_test):
+    #We select a random user
+    user = random.randint(0,len(user_queries))
+    while len_list < 1400:
+        j = random.randint(0,columns-1)
+        if pd.isnull(user_queries.iloc[user,j]):
+            continue
+        else:
+            if [user,j] in list_remove2:
+                continue
+            else:
+                list_remove2.append([user,j])
+                user_queries_test.iloc[user,j] = np.nan
+        
+        len_list = len(list_remove2)
+    return list_remove2, user_queries_test
 
 
 ###################################################################
