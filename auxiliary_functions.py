@@ -309,7 +309,7 @@ def remove_numbers(user_queries, len_list, row, columns, list_remove, user_queri
 ## Remove ranodm values of user in utility matrix
 ################################################################### 
 
-def remove_numbers2(user_queries, len_list, row, columns, list_remove, user_queries_test):
+def remove_numbers2(user_queries, len_list, row, columns, user_queries_test):
     #We select a random user
     user = random.randint(1,len(user_queries))
     li = list(user_queries.iloc[user,1:])
@@ -318,8 +318,9 @@ def remove_numbers2(user_queries, len_list, row, columns, list_remove, user_quer
         
     len_list = len(li_nan)
     
+    list_remove = []
     while len_list < 1400:
-        j = random.randint(0,len(li_not_nan))
+        j = random.randint(0,len(li_not_nan)-1)
         
         if [user,li_not_nan[j]] in list_remove:
             continue
@@ -327,14 +328,38 @@ def remove_numbers2(user_queries, len_list, row, columns, list_remove, user_quer
             list_remove.append([user,li_not_nan[j]])
             user_queries_test.iloc[user,li_not_nan[j]] = np.nan
         
-        len_list = len(list_remove)
+        len_list += len(list_remove)
     return user,list_remove, user_queries_test
+
+
+def remove_numbers3(user_queries, len_list, row, columns, user_queries_test):
+    #We select a random query
+    query = random.randint(0,columns-1)
+
+    li = list(user_queries.iloc[1:,query])
+    li_not_nan = [i for i, element in enumerate(li) if np.isnan(element)]
+    li_nan = [i for i in range(len(li)) if i not in li_not_nan]
+        
+    len_list = len(li_nan)
+    
+    list_remove = []
+    while len_list < 70:
+        i = random.randint(0,len(li_not_nan)-1)
+        
+        if [li_not_nan[i],query] in list_remove:
+            continue
+        else:
+            list_remove.append([li_not_nan[i],query])
+            user_queries_test.iloc[li_not_nan[i],query] = np.nan
+        
+        len_list += len(list_remove)
+    return query,list_remove, user_queries_test
 
 ###################################################################
 ## Recommender function
 ################################################################### 
 
-def utility_matrix_rec(path_user_queries_test, labels, n, kmeans_labels):
+def utility_matrix_rec(path_user_queries_test, labels, n, kmeans_labels, matching_outputs_name, user_queries_fill_name ):
     #print('-------------------query assignement-------------\n')
     queries =  pd.read_csv("./data_house/queries_to_use.csv", sep = ',', index_col = 0)
     data = pd.read_csv("./data_house/database.csv", sep = ',') 
@@ -343,7 +368,7 @@ def utility_matrix_rec(path_user_queries_test, labels, n, kmeans_labels):
     column_names_queries = queries.columns
 
     matching_outputs = queries_to_tuples(queries,data, kmeans_labels, n)
-    matching_outputs.to_csv('data_house/matching_outputs_test.csv', header = False, sep = ',', index=False)
+    matching_outputs.to_csv(matching_outputs_name, header = False, sep = ',', index=False)
     maxValueIndex = matching_outputs.idxmax(axis = 1)
     queries['kmeans_label_id'] = maxValueIndex
 
@@ -426,7 +451,7 @@ def utility_matrix_rec(path_user_queries_test, labels, n, kmeans_labels):
                 index_top_ranking[min_index_ranking] = int(item)
                 value_top_ranking[min_index_ranking] =  float(ranking) 
         
-        user_queries.to_csv('./data_house/user_queries_fill_test.csv', header = True, sep = ',')
+        user_queries.to_csv(user_queries_fill_name, header = True, sep = ',')
 
 
 ###################################################################
